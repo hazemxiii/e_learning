@@ -46,14 +46,45 @@ class _StudentHomePageState extends State<StudentHomePage> {
             return Column(
               children: [
                 ...exams.map((exam) => InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => ExamPage(name: exam.id)));
+                    onTap: () async {
+                      openExam(context, exam);
                     },
                     child: Text(exam.get("time"))))
               ],
             );
           },
         )));
+  }
+}
+
+void openExam(BuildContext context, var exam) async {
+  /// opens the exam or no depending on student answer time and grade status
+  var studentExamData = await exam.reference
+      .collection(FirebaseAuth.instance.currentUser!.uid)
+      .doc("data")
+      .get();
+
+  try {
+    Map answers = studentExamData.get("answers");
+    print(answers);
+  } catch (e) {
+    //
+  }
+
+  DateTime openTime = DateTime.now();
+  try {
+    // stores the first time a student opens the exam
+    openTime = studentExamData.get("openTime").toDate();
+  } catch (e) {
+    //
+  }
+  // if the time passed since first open is past exam time, prevent the student from changing answers
+  double diff = DateTime.now().difference(openTime).inSeconds / 60;
+  if (diff > exam.get("duration")) {
+  } else {
+    if (context.mounted) {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ExamPage(name: exam.id, firstOpen: diff == 0)));
+    }
   }
 }

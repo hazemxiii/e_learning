@@ -1,5 +1,6 @@
 import 'package:e_learning/admin/admin_home.dart';
 import 'package:e_learning/admin/exam_questions_notifier.dart';
+import 'package:e_learning/student/student_global.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,18 +17,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // runApp(const MyApp(home: SignIn()));
-  runApp(ChangeNotifierProvider(
-    create: (context) => ExamQuestionsNotifier(),
-    child: const MyApp(
-      home: SignIn(),
-    ),
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (context) => ExamQuestionsNotifier()),
+      ChangeNotifierProvider(create: (context) => ExamNotifier())
+    ],
+    child: const MyApp(),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final Widget home;
-  const MyApp({super.key, required this.home});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
