@@ -51,7 +51,7 @@ class _ExamPageState extends State<ExamPage> {
               if (snap.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
-              //
+              // get the first time a student opened the exam to check if time allowed is passed
               String uid = FirebaseAuth.instance.currentUser!.uid;
               if (widget.firstOpen) {
                 DocumentReference answerReference = db
@@ -66,6 +66,7 @@ class _ExamPageState extends State<ExamPage> {
                 int questionIndex = examNot.currentQuestion;
                 Provider.of<ExamNotifier>(context, listen: false)
                     .setQuestionsCount(questions.length);
+
                 return Column(
                   children: [
                     LinearProgressIndicator(
@@ -308,6 +309,7 @@ void showAwesomeDialog(
     animType: AnimType.rightSlide,
     title: 'Result',
     desc: result,
+    // the ok button either resends the exam when the student doesn't answer all questions, or just dismiss
     btnOkOnPress: result == "Done"
         ? () {}
         : () async {
@@ -318,6 +320,7 @@ void showAwesomeDialog(
               showAwesomeDialog(context, exam, uid, result);
             }
           },
+    // the cancel button will only show when there're questions unanswered
     btnCancelOnPress: result == "Done" ? null : () {},
   ).show();
 }

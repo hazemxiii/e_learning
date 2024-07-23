@@ -19,7 +19,7 @@ void main() async {
   );
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (context) => ExamQuestionsNotifier()),
+      ChangeNotifierProvider(create: (context) => AddExamNotifier()),
       ChangeNotifierProvider(create: (context) => ExamNotifier())
     ],
     child: const MyApp(),
@@ -62,8 +62,8 @@ class _SignInState extends State<SignIn> {
 
   @override
   void initState() {
-    userNameCont = TextEditingController();
-    passCont = TextEditingController();
+    userNameCont = TextEditingController(text: "e43304113@gmail.com");
+    passCont = TextEditingController(text: "123456");
     hidePass = true;
     super.initState();
   }
@@ -77,12 +77,16 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
-    UnderlineInputBorder focusedBorder = UnderlineInputBorder(
-        borderSide:
-            BorderSide(color: isError ? Colors.red : Clrs.blue, width: 3));
+    // UnderlineInputBorder focusedBorder = UnderlineInputBorder(
+    //     borderSide:
+    //         BorderSide(color: isError ? Colors.red : Clrs.blue, width: 3));
 
-    UnderlineInputBorder enabledBorder = UnderlineInputBorder(
-        borderSide: BorderSide(color: isError ? Colors.red : Clrs.blue));
+    // UnderlineInputBorder enabledBorder = UnderlineInputBorder(
+    //     borderSide: BorderSide(color: isError ? Colors.red : Clrs.blue));
+
+    List borders = CustomDecoration.giveInputDecoration(
+        BorderType.under, Clrs.blue, true,
+        error: isError);
 
     return Scaffold(
       backgroundColor: Clrs.white,
@@ -103,13 +107,20 @@ class _SignInState extends State<SignIn> {
                 style: TextStyle(color: Clrs.pink),
                 cursorColor: Clrs.pink,
                 controller: userNameCont,
-                decoration: InputDecoration(
-                    enabledBorder: enabledBorder,
-                    focusedBorder: focusedBorder,
-                    label: Text(
-                      "UserName",
-                      style: TextStyle(color: Clrs.blue),
-                    )),
+                // decoration: InputDecoration(
+                //     enabledBorder: enabledBorder,
+                //     focusedBorder: focusedBorder,
+                //     label: Text(
+                //       "UserName",
+                //       style: TextStyle(color: Clrs.blue),
+                //     )),
+                decoration: CustomDecoration.giveInputDecoration(
+                    label: "UserName",
+                    BorderType.under,
+                    Clrs.blue,
+                    false,
+                    textC: Clrs.pink,
+                    error: isError),
               ),
               const SizedBox(height: 5),
               TextFormField(
@@ -129,8 +140,8 @@ class _SignInState extends State<SignIn> {
                         color: Clrs.pink,
                       ),
                     ),
-                    enabledBorder: enabledBorder,
-                    focusedBorder: focusedBorder,
+                    enabledBorder: borders[0],
+                    focusedBorder: borders[1],
                     label: Text(
                       "Password",
                       style: TextStyle(color: Clrs.blue),

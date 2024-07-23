@@ -20,32 +20,19 @@ class _AddExamPageState extends State<AddExamPage> {
         actions: [
           IconButton(
               onPressed: () async {
-                String result = await Provider.of<ExamQuestionsNotifier>(
-                        context,
-                        listen: false)
-                    .sendExam();
+                String result =
+                    await Provider.of<AddExamNotifier>(context, listen: false)
+                        .sendExam();
                 if (!context.mounted) {
                   return;
                 }
                 // display the result returned from the saving process
                 if (result == "Saved") {
-                  AwesomeDialog(
-                    context: context,
-                    dialogType: DialogType.success,
-                    animType: AnimType.rightSlide,
-                    title: 'Saved',
-                    desc: 'Exam saved successfully',
-                    btnOkOnPress: () {},
-                  ).show();
+                  showSendExamResult(context, "Saved",
+                      "Exam saved successfully", DialogType.success);
                 } else {
-                  AwesomeDialog(
-                    context: context,
-                    dialogType: DialogType.error,
-                    animType: AnimType.rightSlide,
-                    title: 'Error',
-                    desc: result,
-                    btnOkOnPress: () {},
-                  ).show();
+                  showSendExamResult(
+                      context, "Error", result, DialogType.error);
                 }
               },
               icon: const Icon(Icons.send))
@@ -55,13 +42,33 @@ class _AddExamPageState extends State<AddExamPage> {
         title: const Text("Add Exam"),
         centerTitle: true,
       ),
-      body:
-          Consumer<ExamQuestionsNotifier>(builder: (context, questions, child) {
+      body: Consumer<AddExamNotifier>(builder: (context, questions, child) {
         // question index
         int i = 0;
         return SingleChildScrollView(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            margin: const EdgeInsets.only(left: 10, bottom: 10),
+            width: 250,
+            child: TextField(
+              onChanged: (v) {
+                Provider.of<AddExamNotifier>(context, listen: false)
+                    .updateExamName(v);
+              },
+              style: TextStyle(color: Clrs.blue),
+              cursorColor: Clrs.blue,
+              decoration: CustomDecoration.giveInputDecoration(
+                  label: "Exam Name", BorderType.under, Clrs.blue, false),
+            ),
+          ),
+          const DurationPicker(),
+          const Row(children: [
+            DatePicker(
+              dateType: DateType.startDate,
+            ),
+            DatePicker(dateType: DateType.deadline)
+          ]),
           ...questions.getQuestions.map((question) {
             if (question['type'] == QuestionTypes.mcq) {
               return McqQuestionWidget(
@@ -78,14 +85,14 @@ class _AddExamPageState extends State<AddExamPage> {
                     color: Clrs.blue,
                   ),
                   onTap: () {
-                    Provider.of<ExamQuestionsNotifier>(context, listen: false)
+                    Provider.of<AddExamNotifier>(context, listen: false)
                         .addQuestion(QuestionTypes.mcq);
                   }),
               const SizedBox(width: 3),
               AddButtonWidget(
                   icon: Icon(Icons.text_format, color: Clrs.blue),
                   onTap: () {
-                    Provider.of<ExamQuestionsNotifier>(context, listen: false)
+                    Provider.of<AddExamNotifier>(context, listen: false)
                         .addQuestion(QuestionTypes.written);
                   })
             ],
@@ -111,7 +118,7 @@ class _WrittenQuestionWidgetState extends State<WrittenQuestionWidget> {
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
       child: TextField(
         onChanged: (v) {
-          Provider.of<ExamQuestionsNotifier>(context, listen: false)
+          Provider.of<AddExamNotifier>(context, listen: false)
               .updateQuestion(widget.index, "question", v);
         },
         cursorColor: Clrs.blue,
@@ -151,7 +158,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
         children: [
           TextField(
             onChanged: (v) {
-              Provider.of<ExamQuestionsNotifier>(context, listen: false)
+              Provider.of<AddExamNotifier>(context, listen: false)
                   .updateQuestion(widget.index, "question", v);
             },
             cursorColor: Clrs.pink,
@@ -178,7 +185,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
                   trackColor: WidgetStatePropertyAll(Clrs.pink),
                   thumbColor: WidgetStatePropertyAll(Clrs.blue),
                   onChanged: (v) {
-                    Provider.of<ExamQuestionsNotifier>(context, listen: false)
+                    Provider.of<AddExamNotifier>(context, listen: false)
                         .toggleIsMulti(widget.index);
                   },
                   value: widget.isMulti,
@@ -186,7 +193,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
               ),
             ],
           ),
-          Consumer<ExamQuestionsNotifier>(builder: (context, qstn, child) {
+          Consumer<AddExamNotifier>(builder: (context, qstn, child) {
             int choiceIndex = -1;
             return Wrap(children: [
               ...qstn.getChoices(widget.index).map((choice) {
@@ -282,7 +289,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               activeColor: Clrs.pink,
               value: widget.isCorrect,
               onChanged: (v) {
-                Provider.of<ExamQuestionsNotifier>(context, listen: false)
+                Provider.of<AddExamNotifier>(context, listen: false)
                     .selectChoice(widget.index, widget.choiceIndex, v!);
               },
             ),
@@ -292,7 +299,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
                 borderSide: BorderSide(color: Clrs.pink, width: 2)),
             suffix: IconButton(
               onPressed: () {
-                Provider.of<ExamQuestionsNotifier>(context, listen: false)
+                Provider.of<AddExamNotifier>(context, listen: false)
                     .deleteChoice(widget.index, widget.choiceIndex);
               },
               icon: Icon(
@@ -301,10 +308,170 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               ),
             )),
         onChanged: (v) {
-          Provider.of<ExamQuestionsNotifier>(context, listen: false)
+          Provider.of<AddExamNotifier>(context, listen: false)
               .updateChoice(widget.index, widget.choiceIndex, v);
         },
       ),
     );
   }
+}
+
+class DatePicker extends StatefulWidget {
+  // if it's the start date or the deadline
+  final DateType dateType;
+  const DatePicker({super.key, required this.dateType});
+
+  @override
+  State<DatePicker> createState() => _DatePickerState();
+}
+
+class _DatePickerState extends State<DatePicker> {
+  // the date will be displayed on the button when chosen
+  String shownDate = "";
+
+  @override
+  void initState() {
+    // if a date is not selected, display a hint to what the button does
+    shownDate = widget.dateType == DateType.startDate ? "Start at" : "Deadline";
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    return TextButton(
+        onPressed: () async {
+          DateTime? date = await showDatePicker(
+              context: context,
+              initialDate: now,
+              firstDate: now,
+              lastDate: now.add(const Duration(days: 365)));
+
+          // if no date is selected, don't show time picker
+          if (date == null) {
+            return;
+          }
+
+          if (context.mounted) {
+            TimeOfDay? time = await showTimePicker(
+                context: context, initialTime: TimeOfDay.now());
+
+            // if no time is selected, exit the function
+            if (time == null) {
+              return;
+            }
+
+            // add the time to the day
+            date = date.add(Duration(hours: time.hour, minutes: time.minute));
+            if (context.mounted) {
+              bool valid = Provider.of<AddExamNotifier>(context, listen: false)
+                  .setDate(widget.dateType, date);
+              print(valid);
+            }
+
+            setState(() {
+              shownDate =
+                  "${date!.day}/${date.month}/${date.year} ${time.hourOfPeriod}:${time.minute} ${time.period == DayPeriod.am ? "AM" : "PM"}";
+            });
+          }
+        },
+        child: Text(
+          shownDate,
+          style: TextStyle(color: Clrs.pink),
+        ));
+  }
+}
+
+class DurationPicker extends StatefulWidget {
+  const DurationPicker({super.key});
+
+  @override
+  State<DurationPicker> createState() => _DurationPickerState();
+}
+
+class _DurationPickerState extends State<DurationPicker> {
+  late TextEditingController durationCont;
+
+  @override
+  void initState() {
+    durationCont = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    durationCont.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AddExamNotifier>(builder: (context, examNot, child) {
+      durationCont.text = "${examNot.getDuration}";
+      // when changing text, all the text is selected, so remove the selection
+      durationCont.selection =
+          TextSelection.collapsed(offset: durationCont.text.length);
+      return Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              // minus one from duration
+              Provider.of<AddExamNotifier>(context, listen: false)
+                  .setDuration(examNot.getDuration - 1);
+            },
+            icon: const Icon(Icons.remove),
+            color: Clrs.blue,
+          ),
+          SizedBox(
+              width: 30,
+              child: TextField(
+                onChanged: (v) {
+                  // if the user deletes all the text, set it to 0
+                  if (v == "") {
+                    Provider.of<AddExamNotifier>(context, listen: false)
+                        .setDuration(0);
+                  } else {
+                    int? duration = int.tryParse(v);
+                    // if it's not a number, change it to the last valid number
+                    if (duration != null) {
+                      Provider.of<AddExamNotifier>(context, listen: false)
+                          .setDuration(duration);
+                    } else {
+                      Provider.of<AddExamNotifier>(context, listen: false)
+                          .setDuration(examNot.duration);
+                    }
+                  }
+                },
+                controller: durationCont,
+                style: TextStyle(color: Clrs.blue),
+                decoration: CustomDecoration.giveInputDecoration(
+                    BorderType.under, Clrs.pink, false,
+                    focusWidth: 1),
+                textAlign: TextAlign.center,
+              )),
+          IconButton(
+            onPressed: () {
+              // add 1 to the duration
+              Provider.of<AddExamNotifier>(context, listen: false)
+                  .setDuration(examNot.getDuration + 1);
+            },
+            icon: const Icon(Icons.add),
+            color: Clrs.blue,
+          )
+        ],
+      );
+    });
+  }
+}
+
+void showSendExamResult(
+    BuildContext context, String title, String desc, DialogType type) {
+  AwesomeDialog(
+    context: context,
+    dialogType: type,
+    animType: AnimType.rightSlide,
+    title: title,
+    desc: desc,
+    btnOkOnPress: () {},
+  ).show();
 }

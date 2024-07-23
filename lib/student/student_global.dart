@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class ExamNotifier extends ChangeNotifier {
   int currentQuestion = 0;
   Map answers = {};
+  // questions count
   int count = 0;
 
   void setQuestionsCount(int count) {
@@ -11,14 +12,17 @@ class ExamNotifier extends ChangeNotifier {
   }
 
   void selectAnswer(String question, String answer, bool isMulti) {
+    /// selects/deleselects mcq choices
+    // if it's a single-answer-question, change the whole answer. Otherwise, delete or select the answer
     if (!isMulti) {
-      answers[question] = answer;
+      answers[question] = [answer];
     } else {
       if (answers[question] == null) {
         answers[question] = [answer];
       } else {
         if (isSelected(question, answer)) {
           answers[question].remove(answer);
+          // if the question has no answers, remove it from answered questions
           if (answers[question].isEmpty) {
             answers.remove(question);
           }
@@ -31,6 +35,9 @@ class ExamNotifier extends ChangeNotifier {
   }
 
   void changeWrittenAnswer(String question, String answer) {
+    /// change written questions answers as the student type
+
+    // if the question has no answers, remove it from answered questions
     if (answer == "") {
       answers.remove(question);
     } else {

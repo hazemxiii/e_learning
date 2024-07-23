@@ -1,10 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import "package:e_learning/global.dart";
 
-enum QuestionTypes { written, mcq }
-
-class ExamQuestionsNotifier extends ChangeNotifier {
+class AddExamNotifier extends ChangeNotifier {
   List<Map> questions = [];
+  DateTime? deadline;
+  int duration = 0;
+  String examName = "";
+  DateTime? startDate;
+  DateTime? endDate;
+
+  void setDuration(int duration) {
+    if (duration >= 0) {
+      this.duration = duration;
+    }
+    notifyListeners();
+  }
+
+  bool setDate(DateType type, DateTime date) {
+    if (startDate != null && endDate != null) {
+      Duration diff = endDate!.difference(startDate!);
+      if (diff.isNegative) {
+        return false;
+      }
+      if (diff.inMinutes < duration && duration != 0) {
+        return false;
+      }
+    }
+
+    if (type == DateType.startDate) {
+      startDate = date;
+    } else if (type == DateType.deadline) {
+      deadline = date;
+    }
+
+    return true;
+  }
 
   void addQuestion(
     QuestionTypes type,
@@ -41,29 +72,33 @@ class ExamQuestionsNotifier extends ChangeNotifier {
 
   Future<String> sendExam() async {
     /// sends the exam to the db
+
+    if (examName == "") {
+      return "Exam must have a unique non-empty name";
+    }
     if (questions.isEmpty) {
       return "Exam must contain at least 1 question";
     }
     FirebaseFirestore db = FirebaseFirestore.instance;
     final batch = db.batch();
 
-    String id = DateTime.now().toString();
-    final exam = db.collection("exams").doc(id);
-    final examAnswers = db.collection("examsAsnwers").doc(id);
+    final examRef = db.collection("exams").doc(examName);
+    final examAnswersRef = db.collection("examsAsnwers").doc(examName);
 
-// create the documents for the exam and a separate one for answers
-    exam.set({"time": id});
-    examAnswers.set({"time": id});
+    // create the documents for the exam and a separate one for answers
+    examRef.set({"duration": duration});
+    examAnswersRef.set({"duration": duration});
+
     for (int i = 0; i < questions.length; i++) {
       Map questionMap = questions[i];
       String question = questionMap['question'];
 
-      final questionRef = exam.collection("questions").doc(question);
+      final questionRef = examRef.collection("questions").doc(question);
       final questionAnswerRef =
-          examAnswers.collection("questions").doc(question);
+          examAnswersRef.collection("questions").doc(question);
 
       if (question == "") {
-        return "Question $i is missing";
+        return "Question ${i + 1} is missing";
       }
 
       QuestionTypes type = questionMap['type'];
@@ -79,7 +114,7 @@ class ExamQuestionsNotifier extends ChangeNotifier {
           return "Select correct answers for question $i";
         }
 
-// don't take the last element of choices as it's an emtpy one
+        // don't take the last element of choices as it's an emtpy one
         batch.set(questionRef,
             {"choices": choices.sublist(0, choices.length - 1), "type": "mcq"});
         batch.set(questionAnswerRef, {"correct": correct});
@@ -103,6 +138,11 @@ class ExamQuestionsNotifier extends ChangeNotifier {
       choices.add("");
     }
     notifyListeners();
+  }
+
+  void updateExamName(String name) {
+    /// changes the exam name whenever the user types
+    examName = name;
   }
 
   void deleteChoice(int index, int choiceIndex) {
@@ -150,4 +190,5 @@ class ExamQuestionsNotifier extends ChangeNotifier {
   }
 
   List<Map> get getQuestions => questions;
+  int get getDuration => duration;
 }

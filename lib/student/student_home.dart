@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:e_learning/main.dart';
 import 'package:e_learning/student/exam.dart';
+import 'package:e_learning/student/static_exam.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -66,9 +67,16 @@ void openExam(BuildContext context, var exam) async {
 
   try {
     Map answers = studentExamData.get("answers");
-    print(answers);
+    if (context.mounted) {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => StaticExamPage(
+                examName: exam.id,
+                studentAnswers: answers,
+              )));
+      return;
+    }
   } catch (e) {
-    //
+    // print(e);
   }
 
   DateTime openTime = DateTime.now();
@@ -76,7 +84,7 @@ void openExam(BuildContext context, var exam) async {
     // stores the first time a student opens the exam
     openTime = studentExamData.get("openTime").toDate();
   } catch (e) {
-    //
+    // print(e);
   }
   // if the time passed since first open is past exam time, prevent the student from changing answers
   double diff = DateTime.now().difference(openTime).inSeconds / 60;

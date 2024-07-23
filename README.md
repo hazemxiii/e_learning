@@ -1,16 +1,28 @@
 # e_learning
 
-A new Flutter project.
+## add_exam.dart:
 
-## Getting Started
+### send exam:
 
-This project is a starting point for a Flutter application.
+- ExamQuestionsNotifier.sendExam()
+- showSendExamResult()
 
-A few resources to get you started if this is your first Flutter project:
+### setting exam name:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- ExamQuestionsNotifier.updateExamName()
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### setting exam duration
+
+- ExamQuestionsNotifier.setDuration()
+
+### add new question
+
+- ExamQuestionsNotifier.addQuestion()
+
+### custom classes
+
+- DurationPicker -> picks exam duration
+- DatePicker -> picks start/deadline dates
+- McqQuestionWidget -> an mcq question input
+- WrittenQuestionWidget -> a written question input
+- AddButtonWidget -> adds mcq/written question
