@@ -8,8 +8,10 @@ import 'package:provider/provider.dart';
 
 class ExamPage extends StatefulWidget {
   final String name;
-  final bool firstOpen;
-  const ExamPage({super.key, required this.name, required this.firstOpen});
+  const ExamPage({
+    super.key,
+    required this.name,
+  });
 
   @override
   State<ExamPage> createState() => _ExamPageState();
@@ -51,16 +53,7 @@ class _ExamPageState extends State<ExamPage> {
               if (snap.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
-              // get the first time a student opened the exam to check if time allowed is passed
-              String uid = FirebaseAuth.instance.currentUser!.uid;
-              if (widget.firstOpen) {
-                DocumentReference answerReference = db
-                    .collection("exams")
-                    .doc(widget.name)
-                    .collection(uid)
-                    .doc("data");
-                answerReference.set({"openTime": DateTime.now()});
-              }
+
               List<QueryDocumentSnapshot> questions = snap.data!.docs;
               return Consumer<ExamNotifier>(builder: (context, examNot, child) {
                 int questionIndex = examNot.currentQuestion;

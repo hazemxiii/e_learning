@@ -1,4 +1,4 @@
-import 'package:e_learning/admin/exam_questions_notifier.dart';
+import 'package:e_learning/admin/admin_global.dart';
 import 'package:flutter/material.dart';
 import "package:e_learning/global.dart";
 import 'package:provider/provider.dart';
@@ -199,12 +199,12 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
               ...qstn.getChoices(widget.index).map((choice) {
                 choiceIndex++;
                 return ChoiceWidget(
-                  // is a correct answer to the question
-                  isCorrect: qstn.choiceIsCorrect(widget.index, choiceIndex),
-                  text: choice,
-                  index: widget.index,
-                  choiceIndex: choiceIndex,
-                );
+                    // is a correct answer to the question
+                    isCorrect: qstn.choiceIsCorrect(widget.index, choiceIndex),
+                    text: choice,
+                    index: widget.index,
+                    choiceIndex: choiceIndex,
+                    offset: qstn.getOffset);
               }),
             ]);
           })
@@ -245,12 +245,14 @@ class ChoiceWidget extends StatefulWidget {
   final int choiceIndex;
   final String text;
   final bool isCorrect;
+  final int offset;
   const ChoiceWidget({
     super.key,
     required this.index,
     required this.choiceIndex,
     required this.text,
     required this.isCorrect,
+    required this.offset,
   });
 
   @override
@@ -275,8 +277,11 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
   Widget build(BuildContext context) {
     // set text from the notifier and send the cursor to the end of the text
     controller.text = widget.text;
-    controller.selection =
-        TextSelection.collapsed(offset: controller.text.length);
+    try {
+      controller.selection = TextSelection.collapsed(offset: widget.offset);
+    } catch (e) {
+      // print(e);
+    }
     return Container(
       margin: const EdgeInsets.only(right: 5),
       constraints: const BoxConstraints(maxWidth: 200),
@@ -308,8 +313,11 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               ),
             )),
         onChanged: (v) {
-          Provider.of<AddExamNotifier>(context, listen: false)
-              .updateChoice(widget.index, widget.choiceIndex, v);
+          Provider.of<AddExamNotifier>(context, listen: false).updateChoice(
+              widget.index,
+              widget.choiceIndex,
+              v,
+              controller.selection.baseOffset);
         },
       ),
     );
@@ -366,12 +374,15 @@ class _DatePickerState extends State<DatePicker> {
             if (context.mounted) {
               bool valid = Provider.of<AddExamNotifier>(context, listen: false)
                   .setDate(widget.dateType, date);
-              print(valid);
+
+              if (!valid) {
+                return;
+              }
             }
 
             setState(() {
               shownDate =
-                  "${date!.day}/${date.month}/${date.year} ${time.hourOfPeriod}:${time.minute} ${time.period == DayPeriod.am ? "AM" : "PM"}";
+                  "${date!.day}/${date.month}/${date.year} ${time.hourOfPeriod}:${"${time.minute}".padLeft(2, "0")} ${time.period == DayPeriod.am ? "AM" : "PM"}";
             });
           }
         },
@@ -423,7 +434,7 @@ class _DurationPickerState extends State<DurationPicker> {
             color: Clrs.blue,
           ),
           SizedBox(
-              width: 30,
+              width: 50,
               child: TextField(
                 onChanged: (v) {
                   // if the user deletes all the text, set it to 0

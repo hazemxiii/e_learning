@@ -4,13 +4,19 @@ import "package:e_learning/global.dart";
 
 class AddExamNotifier extends ChangeNotifier {
   List<Map> questions = [];
-  DateTime? deadline;
   int duration = 0;
   String examName = "";
   DateTime? startDate;
-  DateTime? endDate;
+  DateTime? deadline;
+  int offset = 0;
 
   void setDuration(int duration) {
+    if (startDate != null && deadline != null) {
+      if (deadline!.difference(startDate!).inMinutes < duration) {
+        return;
+      }
+    }
+
     if (duration >= 0) {
       this.duration = duration;
     }
@@ -18,19 +24,31 @@ class AddExamNotifier extends ChangeNotifier {
   }
 
   bool setDate(DateType type, DateTime date) {
-    if (startDate != null && endDate != null) {
-      Duration diff = endDate!.difference(startDate!);
-      if (diff.isNegative) {
-        return false;
-      }
-      if (diff.inMinutes < duration && duration != 0) {
-        return false;
-      }
-    }
-
     if (type == DateType.startDate) {
+      if (deadline != null) {
+        Duration diff = deadline!.difference(date);
+        if (diff.isNegative) {
+          return false;
+        }
+        if (diff.inMinutes < duration) {
+          duration = diff.inMinutes;
+          notifyListeners();
+        }
+      }
+
       startDate = date;
     } else if (type == DateType.deadline) {
+      if (startDate != null) {
+        Duration diff = date.difference(startDate!);
+        if (diff.isNegative) {
+          return false;
+        }
+        if (diff.inMinutes < duration) {
+          duration = diff.inMinutes;
+          notifyListeners();
+        }
+      }
+
       deadline = date;
     }
 
@@ -86,8 +104,9 @@ class AddExamNotifier extends ChangeNotifier {
     final examAnswersRef = db.collection("examsAsnwers").doc(examName);
 
     // create the documents for the exam and a separate one for answers
-    examRef.set({"duration": duration});
-    examAnswersRef.set({"duration": duration});
+    batch.set(examRef,
+        {"duration": duration, "startDate": startDate, "deadline": deadline});
+    batch.set(examAnswersRef, {"duration": duration});
 
     for (int i = 0; i < questions.length; i++) {
       Map questionMap = questions[i];
@@ -105,6 +124,7 @@ class AddExamNotifier extends ChangeNotifier {
       if (type == QuestionTypes.mcq) {
         List choices = questionMap['choices'];
         List correct = questionMap['correct'];
+        bool isMulti = questionMap['isMulti'];
 
         if (choices.length < 3) {
           return "Question $i doesn't have enough choices ";
@@ -115,8 +135,11 @@ class AddExamNotifier extends ChangeNotifier {
         }
 
         // don't take the last element of choices as it's an emtpy one
-        batch.set(questionRef,
-            {"choices": choices.sublist(0, choices.length - 1), "type": "mcq"});
+        batch.set(questionRef, {
+          "choices": choices.sublist(0, choices.length - 1),
+          "type": "mcq",
+          "isMulti": isMulti
+        });
         batch.set(questionAnswerRef, {"correct": correct});
       } else {
         batch.set(questionRef, {"type": "written"});
@@ -129,7 +152,7 @@ class AddExamNotifier extends ChangeNotifier {
     return "Saved";
   }
 
-  void updateChoice(int index, int choiceIndex, String value) {
+  void updateChoice(int index, int choiceIndex, String value, int offset) {
     /// update the text of a choice
     List choices = questions[index]['choices'];
     choices[choiceIndex] = value;
@@ -137,6 +160,7 @@ class AddExamNotifier extends ChangeNotifier {
     if (choiceIndex == choices.length - 1) {
       choices.add("");
     }
+    this.offset = offset;
     notifyListeners();
   }
 
@@ -191,4 +215,5 @@ class AddExamNotifier extends ChangeNotifier {
 
   List<Map> get getQuestions => questions;
   int get getDuration => duration;
+  int get getOffset => offset;
 }

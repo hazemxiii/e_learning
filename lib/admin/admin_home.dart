@@ -1,4 +1,5 @@
 import 'package:e_learning/admin/add_exam.dart';
+import 'package:e_learning/admin/admin_exam_list.dart';
 import 'package:e_learning/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
               child: Column(
                 children: [
                   TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const AdminExamListPage()));
+                      },
                       child: Text(
                         "Exams List",
                         style: TextStyle(color: Clrs.pink, fontSize: 20),

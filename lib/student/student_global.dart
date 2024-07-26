@@ -81,11 +81,9 @@ class ExamNotifier extends ChangeNotifier {
         .collection("exams")
         .doc(exam)
         .collection(uid)
-        .doc("data");
+        .doc("answersData");
 
-    var openTime = (await studentAnswerRef.get()).get("openTime");
-
-    studentAnswerRef.set({"answers": answers, "openTime": openTime});
+    studentAnswerRef.set({"answers": answers});
 
     return "Done";
   }

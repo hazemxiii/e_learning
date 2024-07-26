@@ -1,5 +1,5 @@
 import 'package:e_learning/admin/admin_home.dart';
-import 'package:e_learning/admin/exam_questions_notifier.dart';
+import 'package:e_learning/admin/admin_global.dart';
 import 'package:e_learning/student/student_global.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
