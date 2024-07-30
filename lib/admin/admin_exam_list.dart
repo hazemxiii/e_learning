@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:e_learning/admin/answers_list.dart';
 import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
@@ -52,16 +53,91 @@ class ExamRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        padding: const EdgeInsets.all(10),
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(5)),
-            color: Clrs.blue),
-        child: Row(
-          children: [
-            Text(examName),
-          ],
-        ));
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => AnswersListPage(examName: examName)));
+      },
+      child: Container(
+          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(5)),
+              color: Clrs.blue),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(examName, style: TextStyle(color: Clrs.pink)),
+              PopupMenuButton(
+                  onSelected: (v) {
+                    if (v == "grade") {
+                      gradeExam(examName);
+                    }
+                  },
+                  iconColor: Clrs.pink,
+                  color: Clrs.pink,
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: "delete",
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Delete",
+                                  style: TextStyle(color: Clrs.blue)),
+                              Icon(
+                                Icons.delete,
+                                color: Clrs.blue,
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                            value: "grade",
+                            child: Text("Grade Exam",
+                                style: TextStyle(color: Clrs.blue)))
+                      ])
+            ],
+          )),
+    );
   }
+}
+
+void gradeExam(String examName) async {
+  FirebaseFirestore db = FirebaseFirestore.instance;
+
+  List studentAnswers =
+      (await db.collection("/exams/$examName/studentAnswers").get()).docs;
+
+  Map correctAnswers =
+      (await db.doc("/examsAnswers/$examName").get()).get("correct");
+
+  var batch = db.batch();
+
+  for (int i = 0; i < studentAnswers.length; i++) {
+    double grade = 0;
+    Map answers = studentAnswers[i].get("answers");
+    List questions = answers.keys.toList();
+    for (int j = 0; j < questions.length; j++) {
+      var answer = answers[questions[j]];
+      var correct = correctAnswers[questions[j]];
+
+      if (correct != null) {
+        if (correct.length == answer.length) {
+          for (int k = 0; k < correct.length; k++) {
+            if (correct.contains(answer[k])) {
+              grade = grade + 1 / correct.length;
+            }
+          }
+        }
+      } else {
+        if (answer['correct']) {
+          grade++;
+        }
+      }
+    }
+    DocumentReference student =
+        db.doc("/exams/$examName/studentAnswers/${studentAnswers[i].id}");
+    batch.update(student, {"grade": grade});
+  }
+  batch.commit().then((_) {}).catchError((e) => e);
 }

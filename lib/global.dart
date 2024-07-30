@@ -6,6 +6,8 @@ enum QuestionTypes { written, mcq }
 
 enum DateType { startDate, deadline }
 
+enum ExamStatus { passed, waiting, open }
+
 class Clrs {
   static Color white = const Color.fromRGBO(255, 255, 255, 1);
   static Color blue = const Color.fromRGBO(128, 147, 241, 1);

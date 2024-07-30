@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:e_learning/student/exam.dart';
+import 'package:e_learning/student/exam_preview.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -58,12 +59,12 @@ class ExamRowWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // contains data about whether the exam is locked or can be opened
     List lockedData = isExamLocked(startDate, deadline);
-    bool locked = lockedData[0];
+    ExamStatus examStatus = lockedData[0];
     String hintMessage = lockedData[1];
 
     return InkWell(
       onTap: () {
-        openExam(context, locked, examName, duration);
+        openExam(context, examStatus, examName, duration);
       },
       child: Column(
         children: [
@@ -80,7 +81,7 @@ class ExamRowWidget extends StatelessWidget {
                   style: TextStyle(color: Clrs.pink),
                 ),
                 Visibility(
-                  visible: locked,
+                  visible: examStatus != ExamStatus.open,
                   child: Icon(Icons.lock, color: Clrs.pink),
                 )
               ],
@@ -113,47 +114,56 @@ List isExamLocked(Timestamp? start, Timestamp? end) {
   DateTime now = DateTime.now();
   if (start != null) {
     if (now.isBefore(start.toDate())) {
-      return [true, "Exam starts at: ${start.toDate().toString()}"];
+      return [
+        ExamStatus.waiting,
+        "Exam starts at: ${start.toDate().toString()}"
+      ];
     }
   }
 
   if (end != null) {
     if (now.isAfter(end.toDate())) {
-      return [true, "The exam is no longer accepting answers"];
+      return [ExamStatus.passed, "The exam is no longer accepting answers"];
     }
   }
 
-  return [false, ""];
+  return [ExamStatus.open, ""];
 }
 
-void openExam(
-    BuildContext context, bool locked, String exam, int duration) async {
-  if (locked) return;
+void openExam(BuildContext context, ExamStatus examStatus, String exam,
+    int duration) async {
+  if (examStatus == ExamStatus.waiting) return;
 
   String uid = FirebaseAuth.instance.currentUser!.uid;
   FirebaseFirestore db = FirebaseFirestore.instance;
 
-  var userMetaRef =
-      db.collection("exams").doc(exam).collection(uid).doc("metaData");
+  DocumentReference userRef =
+      db.collection("exams").doc(exam).collection("studentAnswers").doc(uid);
 
-  var userMeta = await userMetaRef.get();
+  var userDoc = await userRef.get();
 
-  // if it's the first time for the user to open this exam, add the first date opened to check when they pass the allowed exam time
-  if (!userMeta.exists) {
-    userMetaRef.set({"firstOpen": DateTime.now()});
-  } else {
-    DateTime firstOpen = userMeta.get("firstOpen").toDate();
-    if (DateTime.now().difference(firstOpen).inMinutes >= duration &&
-        duration != 0) return;
+  if (!userDoc.exists && examStatus != ExamStatus.passed) {
+    userRef.set({"firstOpen": DateTime.now()});
+    if (context.mounted) {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+    }
+    return;
   }
 
-  var userAnswersRef =
-      db.collection("exams").doc(exam).collection(uid).doc("answersData");
-
-  if ((await userAnswersRef.get()).exists) return;
+  DateTime firstOpen = userDoc.get("firstOpen").toDate();
+  if ((DateTime.now().difference(firstOpen).inMinutes < duration ||
+          duration == 0) &&
+      userDoc.get("answers") == null) {
+    if (context.mounted) {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+    }
+    return;
+  }
 
   if (context.mounted) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => ExamPreviewPage(examName: exam, uid: uid)));
   }
 }

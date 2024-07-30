@@ -80,10 +80,10 @@ class ExamNotifier extends ChangeNotifier {
     DocumentReference studentAnswerRef = FirebaseFirestore.instance
         .collection("exams")
         .doc(exam)
-        .collection(uid)
-        .doc("answersData");
+        .collection("studentAnswers")
+        .doc(uid);
 
-    studentAnswerRef.set({"answers": answers});
+    studentAnswerRef.update({"answers": answers});
 
     return "Done";
   }

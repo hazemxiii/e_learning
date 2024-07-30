@@ -101,20 +101,21 @@ class AddExamNotifier extends ChangeNotifier {
     final batch = db.batch();
 
     final examRef = db.collection("exams").doc(examName);
-    final examAnswersRef = db.collection("examsAsnwers").doc(examName);
+    final examAnswersRef = db.collection("examsAnswers").doc(examName);
 
     // create the documents for the exam and a separate one for answers
     batch.set(examRef,
         {"duration": duration, "startDate": startDate, "deadline": deadline});
-    batch.set(examAnswersRef, {"duration": duration});
+    batch.set(examAnswersRef, {"answers": duration});
+    Map correctAnswers = {};
 
     for (int i = 0; i < questions.length; i++) {
       Map questionMap = questions[i];
       String question = questionMap['question'];
 
       final questionRef = examRef.collection("questions").doc(question);
-      final questionAnswerRef =
-          examAnswersRef.collection("questions").doc(question);
+      // final questionAnswerRef =
+      //     examAnswersRef.collection("questions").doc(question);
 
       if (question == "") {
         return "Question ${i + 1} is missing";
@@ -140,11 +141,13 @@ class AddExamNotifier extends ChangeNotifier {
           "type": "mcq",
           "isMulti": isMulti
         });
-        batch.set(questionAnswerRef, {"correct": correct});
+        correctAnswers[question] = correct;
+        // batch.set(questionAnswerRef, {"correct": correct});
       } else {
         batch.set(questionRef, {"type": "written"});
       }
     }
+    batch.set(examAnswersRef, {"correct": correctAnswers});
     batch.commit().then((_) {}, onError: (e) {
       return e.toString();
     });
