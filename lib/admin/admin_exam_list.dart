@@ -105,6 +105,8 @@ class ExamRow extends StatelessWidget {
 void gradeExam(String examName) async {
   FirebaseFirestore db = FirebaseFirestore.instance;
 
+  Map marks = (await db.doc("/exams/$examName").get()).get("marks");
+
   List studentAnswers =
       (await db.collection("/exams/$examName/studentAnswers").get()).docs;
 
@@ -119,19 +121,22 @@ void gradeExam(String examName) async {
     List questions = answers.keys.toList();
     for (int j = 0; j < questions.length; j++) {
       var answer = answers[questions[j]];
+      if (answer == null) {
+        continue;
+      }
       var correct = correctAnswers[questions[j]];
 
-      if (correct != null) {
+      if (correct.runtimeType == List<dynamic>) {
         if (correct.length == answer.length) {
           for (int k = 0; k < correct.length; k++) {
             if (correct.contains(answer[k])) {
-              grade = grade + 1 / correct.length;
+              grade = grade + marks[questions[j]] / correct.length;
             }
           }
         }
       } else {
-        if (answer['correct']) {
-          grade++;
+        if (correct[studentAnswers[i].id]['correct']) {
+          grade += marks[questions[j]];
         }
       }
     }

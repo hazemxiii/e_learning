@@ -143,7 +143,7 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
   var userDoc = await userRef.get();
 
   if (!userDoc.exists && examStatus != ExamStatus.passed) {
-    userRef.set({"firstOpen": DateTime.now()});
+    userRef.set({"firstOpen": DateTime.now(), "answers": {}});
     if (context.mounted) {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));

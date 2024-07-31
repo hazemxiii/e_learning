@@ -37,13 +37,25 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
               Map studentAnswers = snap.data!["student"];
               bool graded = snap.data!['graded'];
               double grade = snap.data!['grade'];
+              double total = snap.data!['total'];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Visibility(
-                      visible: grade > -1,
-                      child: Text(
-                        "$grade",
+                      visible: graded,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                            color:
+                                grade / total > .5 ? Colors.green : Colors.red,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(5))),
+                        child: Text(
+                          style: const TextStyle(color: Colors.white),
+                          "$grade/$total",
+                        ),
                       )),
                   ...questions.map((question) {
                     if (question.get("type") == "mcq") {
@@ -51,19 +63,19 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                         question: question.id,
                         choices: question.get("choices"),
                         correct: correctAnswers[question.id],
-                        studentAnswers: studentAnswers[question.id],
+                        studentAnswers: studentAnswers[question.id] ?? [],
                       );
                     } else {
-                      Map answerData = studentAnswers[question.id];
+                      Map answerData =
+                          correctAnswers[question.id][widget.uid] ?? {};
                       return WrittenQuestion(
                         uid: widget.uid,
                         examName: widget.examName,
                         question: question.id,
-                        studentAnswer: answerData["studentAnswer"],
+                        studentAnswer: studentAnswers[question.id] ?? "",
                         correct: graded ? answerData['correct'] : null,
-                        correction: graded
-                            ? answerData['correction']
-                            : "Teacher correction should appear here when the exam is marked",
+                        correction: answerData['correction'] ??
+                            "Teacher correction should appear here when the exam is marked",
                       );
                     }
                   })
@@ -243,14 +255,16 @@ Future<Map> getExamAnswers(String examName, String uid) async {
 
   Map? studentAnswers = studentAnswerDoc.get("answers");
   Map correctAnswers = {};
-
   bool graded = true;
-  double grade = -1;
+  double totalMark = 0;
+  double grade = 0;
 
   try {
     grade = studentAnswerDoc.get("grade");
     correctAnswers = (await db.collection("examsAnswers").doc(examName).get())
         .get("correct");
+    totalMark =
+        (await db.doc("/exams/$examName").get()).get("marks")['totalMark'];
   } catch (e) {
     graded = false;
   }
@@ -260,6 +274,7 @@ Future<Map> getExamAnswers(String examName, String uid) async {
     "correct": correctAnswers,
     "student": studentAnswers,
     "graded": graded,
-    "grade": grade
+    "grade": grade,
+    "total": totalMark
   };
 }

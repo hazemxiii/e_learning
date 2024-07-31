@@ -9,6 +9,7 @@ class AddExamNotifier extends ChangeNotifier {
   DateTime? startDate;
   DateTime? deadline;
   int offset = 0;
+  double totalMark = 0;
 
   void setDuration(int duration) {
     if (startDate != null && deadline != null) {
@@ -65,13 +66,11 @@ class AddExamNotifier extends ChangeNotifier {
         "type": type,
         "choices": [""],
         "correct": [],
-        "isMulti": false
+        "isMulti": false,
+        "mark": 0
       });
     } else if (type == QuestionTypes.written) {
-      questions.add({
-        "question": "",
-        "type": type,
-      });
+      questions.add({"question": "", "type": type, "mark": 0});
     }
 
     notifyListeners();
@@ -80,6 +79,9 @@ class AddExamNotifier extends ChangeNotifier {
   void updateQuestion(int index, String key, var value) {
     /// updates the question itself
     questions[index][key] = value;
+    if (key == "mark") {
+      totalMark += value;
+    }
   }
 
   void addChoice(int index) {
@@ -104,22 +106,25 @@ class AddExamNotifier extends ChangeNotifier {
     final examAnswersRef = db.collection("examsAnswers").doc(examName);
 
     // create the documents for the exam and a separate one for answers
-    batch.set(examRef,
-        {"duration": duration, "startDate": startDate, "deadline": deadline});
-    batch.set(examAnswersRef, {"answers": duration});
+    batch.set(examRef, {
+      "duration": duration,
+      "startDate": startDate,
+      "deadline": deadline,
+    });
     Map correctAnswers = {};
+    Map marks = {"totalMark": totalMark};
 
     for (int i = 0; i < questions.length; i++) {
       Map questionMap = questions[i];
       String question = questionMap['question'];
 
       final questionRef = examRef.collection("questions").doc(question);
-      // final questionAnswerRef =
-      //     examAnswersRef.collection("questions").doc(question);
 
       if (question == "") {
         return "Question ${i + 1} is missing";
       }
+
+      marks[question] = questionMap['mark'];
 
       QuestionTypes type = questionMap['type'];
       if (type == QuestionTypes.mcq) {
@@ -147,6 +152,7 @@ class AddExamNotifier extends ChangeNotifier {
         batch.set(questionRef, {"type": "written"});
       }
     }
+    batch.update(examRef, {"marks": marks});
     batch.set(examAnswersRef, {"correct": correctAnswers});
     batch.commit().then((_) {}, onError: (e) {
       return e.toString();

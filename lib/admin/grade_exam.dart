@@ -43,17 +43,18 @@ class _GradeExamPageState extends State<GradeExamPage> {
                         question: question.id,
                         choices: question.get("choices"),
                         correct: correctAnswers[question.id],
-                        studentAnswers: studentAnswers[question.id],
+                        studentAnswers: studentAnswers[question.id] ?? [],
                       );
                     } else {
-                      Map answerData = studentAnswers[question.id];
+                      Map answerData =
+                          correctAnswers[question.id][widget.uid] ?? {};
                       return WrittenQuestion(
                         uid: widget.uid,
                         examName: widget.examName,
                         question: question.id,
-                        studentAnswer: answerData["studentAnswer"],
+                        studentAnswer: studentAnswers[question.id] ?? "",
                         correct: answerData['correct'],
-                        correction: answerData['correction'],
+                        correction: answerData['correction'] ?? "",
                       );
                     }
                   })
@@ -130,7 +131,7 @@ class WrittenQuestion extends StatefulWidget {
   final String question;
   final String studentAnswer;
   final String correction;
-  final bool correct;
+  final bool? correct;
   const WrittenQuestion(
       {super.key,
       required this.question,
@@ -258,7 +259,7 @@ Future<Map> getExamAnswers(String examName, String uid) async {
       (await db.collection("exams").doc(examName).collection("questions").get())
           .docs;
 
-  Map? studentAnswers = (await db
+  Map studentAnswers = (await db
           .collection("exams")
           .doc(examName)
           .collection("studentAnswers")
@@ -280,18 +281,18 @@ Future<bool> markQuestion(BuildContext context, String examName, String uid,
     String question, String correction, bool correct) async {
   FirebaseFirestore db = FirebaseFirestore.instance;
 
-  DocumentReference answerDoc = db
-      .collection("exams")
-      .doc(examName)
-      .collection("studentAnswers")
-      .doc(uid);
+  DocumentReference answerDoc = db.doc("/examsAnswers/$examName");
 
-  Map answer = (await answerDoc.get().catchError((e) => e)).get("answers");
+  Map answers = (await answerDoc.get()).get("correct");
 
-  answer[question]["correct"] = correct;
-  answer[question]["correction"] = correction;
+  if (answers[question][uid] == null) {
+    answers[question][uid] = {};
+  }
 
-  answerDoc.update({"answers": answer}).then((v) {
+  answers[question][uid]["correct"] = correct;
+  answers[question][uid]["correction"] = correction;
+
+  answerDoc.update({"correct": answers}).then((v) {
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text("Saved")));
     return true;

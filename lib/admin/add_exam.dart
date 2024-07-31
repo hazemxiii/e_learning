@@ -1,6 +1,7 @@
 import 'package:e_learning/admin/admin_global.dart';
 import 'package:flutter/material.dart';
 import "package:e_learning/global.dart";
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
@@ -116,23 +117,44 @@ class _WrittenQuestionWidgetState extends State<WrittenQuestionWidget> {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-      child: TextField(
-        onChanged: (v) {
-          Provider.of<AddExamNotifier>(context, listen: false)
-              .updateQuestion(widget.index, "question", v);
-        },
-        cursorColor: Clrs.blue,
-        style: TextStyle(color: Clrs.blue),
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Clrs.pink,
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: BorderSide(color: Clrs.blue, width: 2)),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: BorderSide(color: Clrs.pink, width: 2)),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+              margin: const EdgeInsets.only(bottom: 5),
+              width: 50,
+              child: TextField(
+                onChanged: (v) {
+                  Provider.of<AddExamNotifier>(context, listen: false)
+                      .updateQuestion(widget.index, "mark", int.parse(v));
+                },
+                style: TextStyle(color: Clrs.pink),
+                cursorColor: Clrs.pink,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.center,
+                decoration: CustomDecoration.giveInputDecoration(
+                    BorderType.under, Clrs.blue, false,
+                    label: "Mark"),
+              )),
+          TextField(
+            onChanged: (v) {
+              Provider.of<AddExamNotifier>(context, listen: false)
+                  .updateQuestion(widget.index, "question", v);
+            },
+            cursorColor: Clrs.blue,
+            style: TextStyle(color: Clrs.blue),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Clrs.pink,
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide(color: Clrs.blue, width: 2)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide(color: Clrs.pink, width: 2)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -156,6 +178,22 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+              margin: const EdgeInsets.only(bottom: 5),
+              width: 50,
+              child: TextField(
+                onChanged: (v) {
+                  Provider.of<AddExamNotifier>(context, listen: false)
+                      .updateQuestion(widget.index, "mark", int.parse(v));
+                },
+                style: TextStyle(color: Clrs.blue),
+                cursorColor: Clrs.blue,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.center,
+                decoration: CustomDecoration.giveInputDecoration(
+                    BorderType.under, Clrs.pink, false,
+                    label: "Mark"),
+              )),
           TextField(
             onChanged: (v) {
               Provider.of<AddExamNotifier>(context, listen: false)
