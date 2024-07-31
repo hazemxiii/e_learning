@@ -42,14 +42,18 @@ class _StudentHomePageState extends State<StudentHomePage> {
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
+            currentIndex: activePage,
+            backgroundColor: Colors.white,
+            unselectedItemColor: Clrs.pink,
+            selectedItemColor: Clrs.blue,
             onTap: (v) {
               setState(() {
                 activePage = v;
               });
             },
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.list), label: "Exams"),
-              BottomNavigationBarItem(icon: Icon(Icons.list), label: "Temp")
+              BottomNavigationBarItem(icon: Icon(Icons.book), label: "Exams"),
+              BottomNavigationBarItem(icon: Icon(Icons.school), label: "Temp")
             ]),
         body: pages[activePage]);
   }

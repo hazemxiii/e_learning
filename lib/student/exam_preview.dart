@@ -17,7 +17,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.uid),
+        title: Text(widget.examName),
         backgroundColor: Colors.white,
         foregroundColor: Clrs.blue,
       ),
@@ -28,8 +28,13 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
             future: getExamAnswers(widget.examName, widget.uid),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Clrs.blue,
+                    ),
+                  ),
                 );
               }
               List questions = snap.data!['questions'];
@@ -66,8 +71,10 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                         studentAnswers: studentAnswers[question.id] ?? [],
                       );
                     } else {
-                      Map answerData =
-                          correctAnswers[question.id][widget.uid] ?? {};
+                      Map answerData = {};
+                      if (correctAnswers.isNotEmpty) {
+                        answerData = correctAnswers[question.id][widget.uid];
+                      }
                       return WrittenQuestion(
                         uid: widget.uid,
                         examName: widget.examName,
@@ -233,6 +240,9 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
                       Icons.close,
                       color: Colors.red,
                     )),
+        ),
+        const SizedBox(
+          height: 10,
         )
       ],
     );

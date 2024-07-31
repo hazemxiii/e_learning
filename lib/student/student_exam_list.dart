@@ -23,17 +23,25 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
             future: db.collection("exams").get(),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
+                return SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Clrs.blue,
+                      ),
+                    ));
               }
               List exams = snap.data!.docs;
               return Column(
                 children: [
                   ...exams.map((exam) {
                     return ExamRowWidget(
-                        examName: exam.id,
-                        duration: exam.get("duration"),
-                        startDate: exam.get("startDate"),
-                        deadline: exam.get("deadline"));
+                      examName: exam.id,
+                      duration: exam.get("duration"),
+                      startDate: exam.get("startDate"),
+                      deadline: exam.get("deadline"),
+                      mark: exam.get("marks")['totalMark'],
+                    );
                   })
                 ],
               );
@@ -48,15 +56,20 @@ class ExamRowWidget extends StatelessWidget {
   final Timestamp? startDate;
   final Timestamp? deadline;
   final int duration;
+  final double mark;
   const ExamRowWidget(
       {super.key,
       required this.examName,
       required this.startDate,
       required this.deadline,
-      required this.duration});
+      required this.duration,
+      required this.mark});
 
   @override
   Widget build(BuildContext context) {
+    FirebaseFirestore db = FirebaseFirestore.instance;
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+
     // contains data about whether the exam is locked or can be opened
     List lockedData = isExamLocked(startDate, deadline);
     ExamStatus examStatus = lockedData[0];
@@ -64,7 +77,7 @@ class ExamRowWidget extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        openExam(context, examStatus, examName, duration);
+        openExam(context, examStatus, examName, duration, uid);
       },
       child: Column(
         children: [
@@ -80,10 +93,34 @@ class ExamRowWidget extends StatelessWidget {
                   examName,
                   style: TextStyle(color: Clrs.pink),
                 ),
-                Visibility(
-                  visible: examStatus != ExamStatus.open,
-                  child: Icon(Icons.lock, color: Clrs.pink),
-                )
+                examStatus == ExamStatus.waiting
+                    ? Icon(Icons.lock, color: Clrs.pink)
+                    : FutureBuilder(
+                        future: db
+                            .doc("/exams/$examName/studentAnswers/$uid")
+                            .get(),
+                        builder: (context, snap) {
+                          if (snap.connectionState != ConnectionState.done) {
+                            return Container();
+                          }
+                          try {
+                            snap.data!.get("grade");
+                          } catch (e) {
+                            return Container();
+                          }
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 8),
+                            decoration: BoxDecoration(
+                                color: Clrs.pink,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(5))),
+                            child: Text(
+                              "${snap.data!.get("grade")}/$mark",
+                              style: TextStyle(color: Clrs.blue),
+                            ),
+                          );
+                        })
               ],
             ),
           ),
@@ -131,10 +168,9 @@ List isExamLocked(Timestamp? start, Timestamp? end) {
 }
 
 void openExam(BuildContext context, ExamStatus examStatus, String exam,
-    int duration) async {
+    int duration, String uid) async {
   if (examStatus == ExamStatus.waiting) return;
 
-  String uid = FirebaseAuth.instance.currentUser!.uid;
   FirebaseFirestore db = FirebaseFirestore.instance;
 
   DocumentReference userRef =
@@ -142,7 +178,15 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
 
   var userDoc = await userRef.get();
 
-  if (!userDoc.exists && examStatus != ExamStatus.passed) {
+  if (!userDoc.exists) {
+    if (examStatus == ExamStatus.passed) {
+      userRef.set({"firstOpen": null, "answers": {}});
+      if (context.mounted) {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => ExamPreviewPage(examName: exam, uid: uid)));
+      }
+      return;
+    }
     userRef.set({"firstOpen": DateTime.now(), "answers": {}});
     if (context.mounted) {
       Navigator.of(context)
@@ -150,16 +194,17 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     }
     return;
   }
-
-  DateTime firstOpen = userDoc.get("firstOpen").toDate();
-  if ((DateTime.now().difference(firstOpen).inMinutes < duration ||
-          duration == 0) &&
-      userDoc.get("answers") == null) {
-    if (context.mounted) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+  if (userDoc.get("firstOpen") != null) {
+    DateTime firstOpen = userDoc.get("firstOpen").toDate();
+    if ((DateTime.now().difference(firstOpen).inMinutes < duration ||
+            duration == 0) &&
+        userDoc.get("answers") == null) {
+      if (context.mounted) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+      }
+      return;
     }
-    return;
   }
 
   if (context.mounted) {

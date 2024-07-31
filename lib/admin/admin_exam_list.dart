@@ -127,8 +127,8 @@ void gradeExam(String examName) async {
       var correct = correctAnswers[questions[j]];
 
       if (correct.runtimeType == List<dynamic>) {
-        if (correct.length == answer.length) {
-          for (int k = 0; k < correct.length; k++) {
+        if (correct.length >= answer.length) {
+          for (int k = 0; k < answer.length; k++) {
             if (correct.contains(answer[k])) {
               grade = grade + marks[questions[j]] / correct.length;
             }
