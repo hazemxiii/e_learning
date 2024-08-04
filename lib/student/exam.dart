@@ -23,7 +23,7 @@ class _ExamPageState extends State<ExamPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Clrs.white,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         actions: [
           IconButton(
@@ -38,8 +38,8 @@ class _ExamPageState extends State<ExamPage> {
               },
               icon: const Icon(Icons.send))
         ],
-        backgroundColor: Clrs.white,
-        foregroundColor: Clrs.blue,
+        backgroundColor: Colors.white,
+        foregroundColor: Clrs.main,
         title: Text(widget.name),
       ),
       body: SingleChildScrollView(
@@ -63,8 +63,8 @@ class _ExamPageState extends State<ExamPage> {
                 return Column(
                   children: [
                     LinearProgressIndicator(
-                      color: Clrs.blue,
-                      backgroundColor: Color.lerp(Clrs.white, Clrs.blue, 0.2),
+                      color: Clrs.main,
+                      backgroundColor: Color.lerp(Colors.white, Clrs.main, 0.2),
                       value: examNot.getPercentageSolved,
                     ),
                     questions[questionIndex].get("type") == "written"
@@ -81,24 +81,24 @@ class _ExamPageState extends State<ExamPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                            color: Clrs.blue,
+                            color: Clrs.main,
                             onPressed: () {
                               Provider.of<ExamNotifier>(context, listen: false)
                                   .prevQuestion();
                             },
                             icon: Icon(
                               Icons.arrow_back_ios_new_sharp,
-                              color: Clrs.pink,
+                              color: Clrs.sec,
                             )),
                         IconButton(
-                            color: Clrs.blue,
+                            color: Clrs.main,
                             onPressed: () {
                               Provider.of<ExamNotifier>(context, listen: false)
                                   .nextQuestion();
                             },
                             icon: Icon(
                               Icons.arrow_forward_ios_sharp,
-                              color: Clrs.pink,
+                              color: Clrs.sec,
                             ))
                       ],
                     )
@@ -126,7 +126,7 @@ class _WrittenAnswerWidgetState extends State<WrittenAnswerWidget> {
 
   @override
   void initState() {
-    controller = TextEditingController(text: widget.answer);
+    controller = TextEditingController();
     super.initState();
   }
 
@@ -138,6 +138,9 @@ class _WrittenAnswerWidgetState extends State<WrittenAnswerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    controller.text = widget.answer;
+    controller.selection =
+        TextSelection.collapsed(offset: widget.answer.length);
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -148,11 +151,11 @@ class _WrittenAnswerWidgetState extends State<WrittenAnswerWidget> {
               margin: const EdgeInsets.all(5),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 5),
               decoration: BoxDecoration(
-                  color: Clrs.blue,
+                  color: Clrs.main,
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
               child: Text(
                 widget.question,
-                style: TextStyle(color: Clrs.pink),
+                style: TextStyle(color: Clrs.sec),
               )),
           Container(
               margin: const EdgeInsets.symmetric(horizontal: 25),
@@ -163,15 +166,15 @@ class _WrittenAnswerWidgetState extends State<WrittenAnswerWidget> {
                   Provider.of<ExamNotifier>(context, listen: false)
                       .changeWrittenAnswer(widget.question, v);
                 },
-                style: TextStyle(color: Clrs.blue),
-                cursorColor: Clrs.blue,
+                style: TextStyle(color: Clrs.main),
+                cursorColor: Clrs.main,
                 decoration: InputDecoration(
                     hintText: "Write your answer here",
-                    hintStyle: TextStyle(color: Clrs.pink),
+                    hintStyle: TextStyle(color: Clrs.sec),
                     enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(width: 1, color: Clrs.pink)),
+                        borderSide: BorderSide(width: 1, color: Clrs.sec)),
                     focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(width: 3, color: Clrs.pink))),
+                        borderSide: BorderSide(width: 3, color: Clrs.sec))),
               ))
         ],
       ),
@@ -202,11 +205,11 @@ class _McqAnswerWidgetState extends State<McqAnswerWidget> {
           margin: const EdgeInsets.all(5),
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 5),
           decoration: BoxDecoration(
-              color: Clrs.pink,
+              color: Clrs.sec,
               borderRadius: const BorderRadius.all(Radius.circular(5))),
           child: Text(
             widget.question,
-            style: TextStyle(color: Clrs.blue),
+            style: TextStyle(color: Clrs.main),
           )),
       Wrap(
         children: [
@@ -223,11 +226,11 @@ class _McqAnswerWidgetState extends State<McqAnswerWidget> {
                         const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                     margin: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                        color: Color.lerp(Clrs.white, Clrs.blue, 0.2),
+                        color: Color.lerp(Colors.white, Clrs.main, 0.2),
                         border: Border.all(
                             width: 3,
-                            color: Color.lerp(
-                                Clrs.white, Clrs.blue, isSelected ? 1 : 0.2)!),
+                            color: Color.lerp(Colors.white, Clrs.main,
+                                isSelected ? 1 : 0.2)!),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(5))),
                     child: Wrap(
@@ -242,7 +245,7 @@ class _McqAnswerWidgetState extends State<McqAnswerWidget> {
                         Container(
                             constraints: const BoxConstraints(maxWidth: 300),
                             child: Text(choice,
-                                style: TextStyle(color: Clrs.blue))),
+                                style: TextStyle(color: Clrs.main))),
                       ],
                     ));
               }),
@@ -277,7 +280,7 @@ class _CustomCheckWidgetState extends State<CustomCheckWidget> {
       width: 15,
       height: 15,
       decoration: BoxDecoration(
-          color: Clrs.pink,
+          color: Clrs.sec,
           borderRadius:
               BorderRadius.all(Radius.circular(widget.isMulti ? 0 : 999))),
       child: Center(
@@ -285,7 +288,7 @@ class _CustomCheckWidgetState extends State<CustomCheckWidget> {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-              color: widget.isSelected ? Clrs.blue : Clrs.pink,
+              color: widget.isSelected ? Clrs.main : Clrs.sec,
               borderRadius:
                   BorderRadius.all(Radius.circular(widget.isMulti ? 0 : 999))),
         ),

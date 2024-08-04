@@ -17,7 +17,7 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor: Clrs.blue,
+        foregroundColor: Clrs.main,
       ),
       body: Container(
           padding: const EdgeInsets.all(10),
@@ -25,11 +25,16 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
           height: double.infinity,
           color: Colors.white,
           child: SingleChildScrollView(
-              child: FutureBuilder(
-            future: db.collection("exams").get(),
+              child: StreamBuilder(
+            stream: db.collection("exams").snapshots(),
             builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
+              if (snap.data == null) {
+                return SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                      color: Clrs.main,
+                    )));
               }
               List exams = snap.data!.docs;
               return Column(
@@ -63,19 +68,24 @@ class ExamRow extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
               borderRadius: const BorderRadius.all(Radius.circular(5)),
-              color: Clrs.blue),
+              color: Clrs.main),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(examName, style: TextStyle(color: Clrs.pink)),
+              Text(examName, style: TextStyle(color: Clrs.sec)),
               PopupMenuButton(
                   onSelected: (v) {
-                    if (v == "grade") {
-                      gradeExam(examName);
+                    switch (v) {
+                      case "grade":
+                        gradeExam(examName);
+                        break;
+                      case "delete":
+                        deleteExam(examName);
+                        break;
                     }
                   },
-                  iconColor: Clrs.pink,
-                  color: Clrs.pink,
+                  iconColor: Clrs.sec,
+                  color: Clrs.sec,
                   itemBuilder: (context) => [
                         PopupMenuItem(
                           value: "delete",
@@ -83,10 +93,10 @@ class ExamRow extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text("Delete",
-                                  style: TextStyle(color: Clrs.blue)),
+                                  style: TextStyle(color: Clrs.main)),
                               Icon(
                                 Icons.delete,
-                                color: Clrs.blue,
+                                color: Clrs.main,
                               ),
                             ],
                           ),
@@ -94,7 +104,7 @@ class ExamRow extends StatelessWidget {
                         PopupMenuItem(
                             value: "grade",
                             child: Text("Grade Exam",
-                                style: TextStyle(color: Clrs.blue)))
+                                style: TextStyle(color: Clrs.main)))
                       ])
             ],
           )),
@@ -114,7 +124,6 @@ void gradeExam(String examName) async {
       (await db.doc("/examsAnswers/$examName").get()).get("correct");
 
   var batch = db.batch();
-
   for (int i = 0; i < studentAnswers.length; i++) {
     double grade = 0;
     Map answers = studentAnswers[i].get("answers");
@@ -135,8 +144,10 @@ void gradeExam(String examName) async {
           }
         }
       } else {
-        if (correct[studentAnswers[i].id]['correct']) {
-          grade += marks[questions[j]];
+        if (correct[studentAnswers[i].id] != null) {
+          if (correct[studentAnswers[i].id]['correct']) {
+            grade += marks[questions[j]];
+          }
         }
       }
     }
@@ -145,4 +156,23 @@ void gradeExam(String examName) async {
     batch.update(student, {"grade": grade});
   }
   batch.commit().then((_) {}).catchError((e) => e);
+}
+
+deleteExam(String examName) async {
+  FirebaseFirestore db = FirebaseFirestore.instance;
+
+  List<QueryDocumentSnapshot> questions =
+      (await db.collection("exams/$examName/questions").get()).docs;
+  for (int i = 0; i < questions.length; i++) {
+    questions[i].reference.delete();
+  }
+
+  List<QueryDocumentSnapshot> responses =
+      (await db.collection("exams/$examName/studentAnswers").get()).docs;
+  for (int i = 0; i < responses.length; i++) {
+    responses[i].reference.delete();
+  }
+
+  db.doc("exams/$examName").delete();
+  db.doc("examsAnswers/$examName").delete();
 }

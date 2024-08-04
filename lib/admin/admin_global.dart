@@ -78,10 +78,17 @@ class AddExamNotifier extends ChangeNotifier {
 
   void updateQuestion(int index, String key, var value) {
     /// updates the question itself
-    questions[index][key] = value;
     if (key == "mark") {
+      totalMark -= questions[index][key];
       totalMark += value;
     }
+    questions[index][key] = value;
+  }
+
+  void deleteQuestion(int index) {
+    totalMark -= questions[index]["mark"];
+    questions.removeAt(index);
+    notifyListeners();
   }
 
   void addChoice(int index) {
@@ -118,11 +125,10 @@ class AddExamNotifier extends ChangeNotifier {
       Map questionMap = questions[i];
       String question = questionMap['question'];
 
-      final questionRef = examRef.collection("questions").doc(question);
-
       if (question == "") {
         return "Question ${i + 1} is missing";
       }
+      final questionRef = examRef.collection("questions").doc(question);
 
       marks[question] = questionMap['mark'];
 
@@ -133,11 +139,11 @@ class AddExamNotifier extends ChangeNotifier {
         bool isMulti = questionMap['isMulti'];
 
         if (choices.length < 3) {
-          return "Question $i doesn't have enough choices ";
+          return "Question ${i + 1} doesn't have enough choices ";
         }
 
         if (correct.isEmpty) {
-          return "Select correct answers for question $i";
+          return "Select correct answers for question ${i + 1}";
         }
 
         // don't take the last element of choices as it's an emtpy one

@@ -13,10 +13,18 @@ class AddExamPage extends StatefulWidget {
 }
 
 class _AddExamPageState extends State<AddExamPage> {
+  late ScrollController scrollController;
+
+  @override
+  void initState() {
+    scrollController = ScrollController();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Clrs.white,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         actions: [
           IconButton(
@@ -38,8 +46,8 @@ class _AddExamPageState extends State<AddExamPage> {
               },
               icon: const Icon(Icons.send))
         ],
-        backgroundColor: Clrs.white,
-        foregroundColor: Clrs.blue,
+        backgroundColor: Colors.white,
+        foregroundColor: Clrs.main,
         title: const Text("Add Exam"),
         centerTitle: true,
       ),
@@ -47,58 +55,68 @@ class _AddExamPageState extends State<AddExamPage> {
         // question index
         int i = 0;
         return SingleChildScrollView(
+            controller: scrollController,
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            margin: const EdgeInsets.only(left: 10, bottom: 10),
-            width: 250,
-            child: TextField(
-              onChanged: (v) {
-                Provider.of<AddExamNotifier>(context, listen: false)
-                    .updateExamName(v);
-              },
-              style: TextStyle(color: Clrs.blue),
-              cursorColor: Clrs.blue,
-              decoration: CustomDecoration.giveInputDecoration(
-                  label: "Exam Name", BorderType.under, Clrs.blue, false),
-            ),
-          ),
-          const DurationPicker(),
-          const Row(children: [
-            DatePicker(
-              dateType: DateType.startDate,
-            ),
-            DatePicker(dateType: DateType.deadline)
-          ]),
-          ...questions.getQuestions.map((question) {
-            if (question['type'] == QuestionTypes.mcq) {
-              return McqQuestionWidget(
-                  index: i++, isMulti: question['isMulti']);
-            }
-            return WrittenQuestionWidget(index: i++);
-          }),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AddButtonWidget(
-                  icon: Icon(
-                    Icons.square_outlined,
-                    color: Clrs.blue,
-                  ),
-                  onTap: () {
+              Container(
+                margin: const EdgeInsets.only(left: 10, bottom: 10),
+                width: 250,
+                child: TextField(
+                  onChanged: (v) {
                     Provider.of<AddExamNotifier>(context, listen: false)
-                        .addQuestion(QuestionTypes.mcq);
-                  }),
-              const SizedBox(width: 3),
-              AddButtonWidget(
-                  icon: Icon(Icons.text_format, color: Clrs.blue),
-                  onTap: () {
-                    Provider.of<AddExamNotifier>(context, listen: false)
-                        .addQuestion(QuestionTypes.written);
-                  })
-            ],
-          )
-        ]));
+                        .updateExamName(v);
+                  },
+                  style: TextStyle(color: Clrs.main),
+                  cursorColor: Clrs.main,
+                  decoration: CustomDecoration.giveInputDecoration(
+                      label: "Exam Name", BorderType.under, Clrs.main, false),
+                ),
+              ),
+              const DurationPicker(),
+              const Row(children: [
+                DatePicker(
+                  dateType: DateType.startDate,
+                ),
+                DatePicker(dateType: DateType.deadline)
+              ]),
+              ...questions.getQuestions.map((question) {
+                if (question['type'] == QuestionTypes.mcq) {
+                  return McqQuestionWidget(
+                      index: i++, isMulti: question['isMulti']);
+                }
+                return WrittenQuestionWidget(index: i++);
+              }),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AddButtonWidget(
+                      icon: Icon(
+                        Icons.check_circle_outline,
+                        color: Clrs.main,
+                      ),
+                      onTap: () {
+                        Provider.of<AddExamNotifier>(context, listen: false)
+                            .addQuestion(QuestionTypes.mcq);
+                        scrollController.animateTo(
+                            scrollController.position.maxScrollExtent + 200,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.linear);
+                      }),
+                  const SizedBox(width: 3),
+                  AddButtonWidget(
+                      icon: Icon(Icons.text_format, color: Clrs.main),
+                      onTap: () {
+                        Provider.of<AddExamNotifier>(context, listen: false)
+                            .addQuestion(QuestionTypes.written);
+                        scrollController.animateTo(
+                            scrollController.position.maxScrollExtent + 100,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.linear);
+                      })
+                ],
+              ),
+              const SizedBox(height: 20)
+            ]));
       }),
     );
   }
@@ -120,38 +138,69 @@ class _WrittenQuestionWidgetState extends State<WrittenQuestionWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-              margin: const EdgeInsets.only(bottom: 5),
-              width: 50,
-              child: TextField(
-                onChanged: (v) {
-                  Provider.of<AddExamNotifier>(context, listen: false)
-                      .updateQuestion(widget.index, "mark", int.parse(v));
-                },
-                style: TextStyle(color: Clrs.pink),
-                cursorColor: Clrs.pink,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textAlign: TextAlign.center,
-                decoration: CustomDecoration.giveInputDecoration(
-                    BorderType.under, Clrs.blue, false,
-                    label: "Mark"),
-              )),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Clrs.main,
+                      borderRadius: const BorderRadius.all(Radius.circular(5))),
+                  child: Text(
+                    "${widget.index + 1}",
+                    style: TextStyle(color: Clrs.sec),
+                  )),
+              Row(
+                children: [
+                  Container(
+                      margin: const EdgeInsets.only(bottom: 5),
+                      width: 50,
+                      child: TextField(
+                        onChanged: (v) {
+                          Provider.of<AddExamNotifier>(context, listen: false)
+                              .updateQuestion(
+                                  widget.index, "mark", int.parse(v));
+                        },
+                        style: TextStyle(color: Clrs.sec),
+                        cursorColor: Clrs.sec,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        textAlign: TextAlign.center,
+                        decoration: CustomDecoration.giveInputDecoration(
+                            BorderType.under, Clrs.main, false,
+                            label: "Mark"),
+                      )),
+                  IconButton(
+                      onPressed: () {
+                        Provider.of<AddExamNotifier>(context, listen: false)
+                            .deleteQuestion(widget.index);
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.red,
+                      ))
+                ],
+              )
+            ],
+          ),
           TextField(
             onChanged: (v) {
               Provider.of<AddExamNotifier>(context, listen: false)
                   .updateQuestion(widget.index, "question", v);
             },
-            cursorColor: Clrs.blue,
-            style: TextStyle(color: Clrs.blue),
+            cursorColor: Clrs.main,
+            style: TextStyle(color: Clrs.main),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Clrs.pink,
+              fillColor: Clrs.sec,
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Clrs.blue, width: 2)),
+                  borderSide: BorderSide(color: Clrs.main, width: 2)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Clrs.pink, width: 2)),
+                  borderSide: BorderSide(color: Clrs.sec, width: 2)),
             ),
           ),
         ],
@@ -178,50 +227,81 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-              margin: const EdgeInsets.only(bottom: 5),
-              width: 50,
-              child: TextField(
-                onChanged: (v) {
-                  Provider.of<AddExamNotifier>(context, listen: false)
-                      .updateQuestion(widget.index, "mark", int.parse(v));
-                },
-                style: TextStyle(color: Clrs.blue),
-                cursorColor: Clrs.blue,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textAlign: TextAlign.center,
-                decoration: CustomDecoration.giveInputDecoration(
-                    BorderType.under, Clrs.pink, false,
-                    label: "Mark"),
-              )),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Clrs.main,
+                      borderRadius: const BorderRadius.all(Radius.circular(5))),
+                  child: Text(
+                    "${widget.index + 1}",
+                    style: TextStyle(color: Clrs.sec),
+                  )),
+              Row(
+                children: [
+                  Container(
+                      margin: const EdgeInsets.only(bottom: 5),
+                      width: 50,
+                      child: TextField(
+                        onChanged: (v) {
+                          Provider.of<AddExamNotifier>(context, listen: false)
+                              .updateQuestion(
+                                  widget.index, "mark", int.parse(v));
+                        },
+                        style: TextStyle(color: Clrs.main),
+                        cursorColor: Clrs.main,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        textAlign: TextAlign.center,
+                        decoration: CustomDecoration.giveInputDecoration(
+                            BorderType.under, Clrs.sec, false,
+                            label: "Mark"),
+                      )),
+                  IconButton(
+                      onPressed: () {
+                        Provider.of<AddExamNotifier>(context, listen: false)
+                            .deleteQuestion(widget.index);
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.red,
+                      ))
+                ],
+              )
+            ],
+          ),
           TextField(
             onChanged: (v) {
               Provider.of<AddExamNotifier>(context, listen: false)
                   .updateQuestion(widget.index, "question", v);
             },
-            cursorColor: Clrs.pink,
-            style: TextStyle(color: Clrs.pink),
+            cursorColor: Clrs.sec,
+            style: TextStyle(color: Clrs.sec),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Clrs.blue,
+              fillColor: Clrs.main,
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Clrs.pink, width: 2)),
+                  borderSide: BorderSide(color: Clrs.sec, width: 2)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Clrs.blue, width: 2)),
+                  borderSide: BorderSide(color: Clrs.main, width: 2)),
             ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text("Allow Multiple Answers:",
-                  style: TextStyle(color: Clrs.blue)),
+                  style: TextStyle(color: Clrs.main)),
               Transform.scale(
                 scale: .7,
                 child: Switch(
-                  trackColor: WidgetStatePropertyAll(Clrs.pink),
-                  thumbColor: WidgetStatePropertyAll(Clrs.blue),
+                  trackColor: WidgetStatePropertyAll(Clrs.sec),
+                  thumbColor: WidgetStatePropertyAll(Clrs.main),
                   onChanged: (v) {
                     Provider.of<AddExamNotifier>(context, listen: false)
                         .toggleIsMulti(widget.index);
@@ -271,7 +351,7 @@ class _AddButtonWidgetState extends State<AddButtonWidget> {
       child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-              color: Clrs.pink,
+              color: Clrs.sec,
               borderRadius: const BorderRadius.all(Radius.circular(999))),
           child: widget.icon),
     );
@@ -324,12 +404,12 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
       margin: const EdgeInsets.only(right: 5),
       constraints: const BoxConstraints(maxWidth: 200),
       child: TextField(
-        cursorColor: Clrs.blue,
-        style: TextStyle(color: Clrs.blue),
+        cursorColor: Clrs.main,
+        style: TextStyle(color: Clrs.main),
         controller: controller,
         decoration: InputDecoration(
             prefixIcon: Checkbox(
-              activeColor: Clrs.pink,
+              activeColor: Clrs.sec,
               value: widget.isCorrect,
               onChanged: (v) {
                 Provider.of<AddExamNotifier>(context, listen: false)
@@ -337,9 +417,9 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               },
             ),
             focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Clrs.blue, width: 2)),
+                borderSide: BorderSide(color: Clrs.main, width: 2)),
             enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Clrs.pink, width: 2)),
+                borderSide: BorderSide(color: Clrs.sec, width: 2)),
             suffix: IconButton(
               onPressed: () {
                 Provider.of<AddExamNotifier>(context, listen: false)
@@ -347,7 +427,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               },
               icon: Icon(
                 Icons.close,
-                color: Clrs.pink,
+                color: Clrs.sec,
               ),
             )),
         onChanged: (v) {
@@ -426,7 +506,7 @@ class _DatePickerState extends State<DatePicker> {
         },
         child: Text(
           shownDate,
-          style: TextStyle(color: Clrs.pink),
+          style: TextStyle(color: Clrs.sec),
         ));
   }
 }
@@ -469,7 +549,7 @@ class _DurationPickerState extends State<DurationPicker> {
                   .setDuration(examNot.getDuration - 1);
             },
             icon: const Icon(Icons.remove),
-            color: Clrs.blue,
+            color: Clrs.main,
           ),
           SizedBox(
               width: 50,
@@ -492,9 +572,9 @@ class _DurationPickerState extends State<DurationPicker> {
                   }
                 },
                 controller: durationCont,
-                style: TextStyle(color: Clrs.blue),
+                style: TextStyle(color: Clrs.main),
                 decoration: CustomDecoration.giveInputDecoration(
-                    BorderType.under, Clrs.pink, false,
+                    BorderType.under, Clrs.sec, false,
                     focusWidth: 1),
                 textAlign: TextAlign.center,
               )),
@@ -505,7 +585,7 @@ class _DurationPickerState extends State<DurationPicker> {
                   .setDuration(examNot.getDuration + 1);
             },
             icon: const Icon(Icons.add),
-            color: Clrs.blue,
+            color: Clrs.main,
           )
         ],
       );

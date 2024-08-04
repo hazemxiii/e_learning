@@ -85,27 +85,27 @@ class _SignInState extends State<SignIn> {
     //     borderSide: BorderSide(color: isError ? Colors.red : Clrs.blue));
 
     List borders = CustomDecoration.giveInputDecoration(
-        BorderType.under, Clrs.blue, true,
+        BorderType.under, Clrs.main, true,
         error: isError);
 
     return Scaffold(
-      backgroundColor: Clrs.white,
+      backgroundColor: Colors.white,
       body: Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
           constraints: const BoxConstraints(maxWidth: 500),
-          color: Clrs.white,
+          color: Colors.white,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("Unlock Your Potential",
                   style: TextStyle(
-                      color: Clrs.blue,
+                      color: Clrs.main,
                       fontSize: 24,
                       fontWeight: FontWeight.bold)),
               TextFormField(
-                style: TextStyle(color: Clrs.pink),
-                cursorColor: Clrs.pink,
+                style: TextStyle(color: Clrs.sec),
+                cursorColor: Clrs.sec,
                 controller: userNameCont,
                 // decoration: InputDecoration(
                 //     enabledBorder: enabledBorder,
@@ -117,17 +117,17 @@ class _SignInState extends State<SignIn> {
                 decoration: CustomDecoration.giveInputDecoration(
                     label: "UserName",
                     BorderType.under,
-                    Clrs.blue,
+                    Clrs.main,
                     false,
-                    textC: Clrs.pink,
+                    textC: Clrs.sec,
                     error: isError),
               ),
               const SizedBox(height: 5),
               TextFormField(
-                style: TextStyle(color: Clrs.pink),
+                style: TextStyle(color: Clrs.sec),
                 controller: passCont,
                 obscureText: hidePass,
-                cursorColor: Clrs.pink,
+                cursorColor: Clrs.sec,
                 decoration: InputDecoration(
                     suffix: IconButton(
                       onPressed: () {
@@ -137,14 +137,14 @@ class _SignInState extends State<SignIn> {
                       },
                       icon: Icon(
                         hidePass ? Icons.visibility : Icons.visibility_off,
-                        color: Clrs.pink,
+                        color: Clrs.sec,
                       ),
                     ),
                     enabledBorder: borders[0],
                     focusedBorder: borders[1],
                     label: Text(
                       "Password",
-                      style: TextStyle(color: Clrs.blue),
+                      style: TextStyle(color: Clrs.main),
                     )),
               ),
               const SizedBox(
@@ -185,7 +185,7 @@ class _SignInState extends State<SignIn> {
                       decoration: BoxDecoration(
                         borderRadius:
                             const BorderRadius.all(Radius.circular(999)),
-                        color: Clrs.blue,
+                        color: Clrs.main,
                       ),
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 150),
@@ -194,12 +194,12 @@ class _SignInState extends State<SignIn> {
                         children: [
                           Icon(
                             Icons.login,
-                            color: Clrs.pink,
+                            color: Clrs.sec,
                           ),
                           const SizedBox(
                             width: 3,
                           ),
-                          Text("Login", style: TextStyle(color: Clrs.pink))
+                          Text("Login", style: TextStyle(color: Clrs.sec))
                         ],
                       ),
                     ),

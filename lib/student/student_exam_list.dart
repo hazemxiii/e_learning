@@ -27,7 +27,7 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
                     height: MediaQuery.of(context).size.height,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: Clrs.blue,
+                        color: Clrs.main,
                       ),
                     ));
               }
@@ -84,17 +84,17 @@ class ExamRowWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Clrs.blue,
+                color: Clrs.main,
                 borderRadius: const BorderRadius.all(Radius.circular(7))),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   examName,
-                  style: TextStyle(color: Clrs.pink),
+                  style: TextStyle(color: Clrs.sec),
                 ),
                 examStatus == ExamStatus.waiting
-                    ? Icon(Icons.lock, color: Clrs.pink)
+                    ? Icon(Icons.lock, color: Clrs.sec)
                     : FutureBuilder(
                         future: db
                             .doc("/exams/$examName/studentAnswers/$uid")
@@ -112,12 +112,12 @@ class ExamRowWidget extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 5, horizontal: 8),
                             decoration: BoxDecoration(
-                                color: Clrs.pink,
+                                color: Clrs.sec,
                                 borderRadius:
                                     const BorderRadius.all(Radius.circular(5))),
                             child: Text(
                               "${snap.data!.get("grade")}/$mark",
-                              style: TextStyle(color: Clrs.blue),
+                              style: TextStyle(color: Clrs.main),
                             ),
                           );
                         })
@@ -132,13 +132,13 @@ class ExamRowWidget extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   decoration: BoxDecoration(
-                      color: Clrs.pink,
+                      color: Clrs.sec,
                       borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(10),
                           bottomRight: Radius.circular(10))),
                   child: Text(
                     hintMessage,
-                    style: TextStyle(color: Clrs.blue),
+                    style: TextStyle(color: Clrs.main),
                   ))),
           const SizedBox(height: 10)
         ],
@@ -198,7 +198,7 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     DateTime firstOpen = userDoc.get("firstOpen").toDate();
     if ((DateTime.now().difference(firstOpen).inMinutes < duration ||
             duration == 0) &&
-        userDoc.get("answers") == null) {
+        userDoc.get("answers").isEmpty) {
       if (context.mounted) {
         Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => ExamPage(name: exam)));

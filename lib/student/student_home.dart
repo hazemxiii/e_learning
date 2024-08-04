@@ -24,10 +24,10 @@ class _StudentHomePageState extends State<StudentHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Clrs.white,
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Clrs.white,
-          foregroundColor: Clrs.blue,
+          backgroundColor: Colors.white,
+          foregroundColor: Clrs.main,
           centerTitle: true,
           title: const Text("Home"),
           actions: [
@@ -44,8 +44,8 @@ class _StudentHomePageState extends State<StudentHomePage> {
         bottomNavigationBar: BottomNavigationBar(
             currentIndex: activePage,
             backgroundColor: Colors.white,
-            unselectedItemColor: Clrs.pink,
-            selectedItemColor: Clrs.blue,
+            unselectedItemColor: Clrs.sec,
+            selectedItemColor: Clrs.main,
             onTap: (v) {
               setState(() {
                 activePage = v;

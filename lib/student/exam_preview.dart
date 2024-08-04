@@ -19,7 +19,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
       appBar: AppBar(
         title: Text(widget.examName),
         backgroundColor: Colors.white,
-        foregroundColor: Clrs.blue,
+        foregroundColor: Clrs.main,
       ),
       body: Container(
         padding: const EdgeInsets.all(10),
@@ -32,7 +32,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                   height: MediaQuery.of(context).size.height,
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: Clrs.blue,
+                      color: Clrs.main,
                     ),
                   ),
                 );
@@ -71,18 +71,15 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                         studentAnswers: studentAnswers[question.id] ?? [],
                       );
                     } else {
-                      Map answerData = {};
-                      if (correctAnswers.isNotEmpty) {
-                        answerData = correctAnswers[question.id][widget.uid];
-                      }
+                      Map answerData =
+                          correctAnswers[question.id][widget.uid] ?? {};
                       return WrittenQuestion(
                         uid: widget.uid,
                         examName: widget.examName,
                         question: question.id,
                         studentAnswer: studentAnswers[question.id] ?? "",
                         correct: graded ? answerData['correct'] : null,
-                        correction: answerData['correction'] ??
-                            "Teacher correction should appear here when the exam is marked",
+                        correction: answerData['correction'] ?? "",
                       );
                     }
                   })
@@ -110,51 +107,54 @@ class McqQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-              color: Clrs.blue,
-              borderRadius: const BorderRadius.all(Radius.circular(5))),
-          child: Text(
-            question,
-            style: TextStyle(color: Clrs.pink),
-          )),
-      const SizedBox(height: 5),
-      Wrap(children: [
-        ...choices.map((choice) {
-          Color backC = Colors.white;
-          if (correct != null) {
-            if (correct!.contains(choice)) {
-              if (studentAnswers.contains(choice)) {
-                backC = Colors.green;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: Clrs.main,
+                borderRadius: const BorderRadius.all(Radius.circular(5))),
+            child: Text(
+              question,
+              style: TextStyle(color: Clrs.sec),
+            )),
+        const SizedBox(height: 5),
+        Wrap(children: [
+          ...choices.map((choice) {
+            Color backC = Colors.white;
+            if (correct != null) {
+              if (correct!.contains(choice)) {
+                if (studentAnswers.contains(choice)) {
+                  backC = Colors.green;
+                } else {
+                  backC = Clrs.main;
+                }
               } else {
-                backC = Clrs.blue;
+                if (studentAnswers.contains(choice)) {
+                  backC = Colors.red;
+                }
               }
             } else {
               if (studentAnswers.contains(choice)) {
-                backC = Colors.red;
+                backC = Clrs.main;
               }
             }
-          } else {
-            if (studentAnswers.contains(choice)) {
-              backC = Clrs.blue;
-            }
-          }
-          return Container(
-              constraints: const BoxConstraints(minWidth: 100),
-              padding: const EdgeInsets.all(5),
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Clrs.blue),
-                  color: backC,
-                  borderRadius: const BorderRadius.all(Radius.circular(5))),
-              child: Text(choice, style: TextStyle(color: Clrs.pink)));
-        })
+            return Container(
+                constraints: const BoxConstraints(minWidth: 100),
+                padding: const EdgeInsets.all(5),
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Clrs.main),
+                    color: backC,
+                    borderRadius: const BorderRadius.all(Radius.circular(5))),
+                child: Text(choice, style: TextStyle(color: Clrs.sec)));
+          })
+        ]),
+        const SizedBox(height: 15),
       ]),
-      const SizedBox(height: 15),
-    ]);
+    );
   }
 }
 
@@ -198,53 +198,45 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
       }
     }
 
-    return Column(
-      children: [
-        Container(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: Clrs.main,
+                  borderRadius: const BorderRadius.all(Radius.circular(5))),
+              child: Text(
+                widget.question,
+                style: TextStyle(color: Clrs.sec),
+              )),
+          const SizedBox(height: 5),
+          Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: isCorrect ? Colors.green : Colors.red,
+                  borderRadius: const BorderRadius.all(Radius.circular(5))),
+              child: Text(widget.studentAnswer,
+                  style: const TextStyle(color: Colors.white))),
+          Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Clrs.blue,
-                borderRadius: const BorderRadius.all(Radius.circular(5))),
+                border: BorderDirectional(
+                    bottom: BorderSide(color: Clrs.sec, width: 3))),
             child: Text(
-              widget.question,
-              style: TextStyle(color: Clrs.pink),
-            )),
-        const SizedBox(height: 5),
-        Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Clrs.pink,
-                borderRadius: const BorderRadius.all(Radius.circular(5))),
-            child:
-                Text(widget.studentAnswer, style: TextStyle(color: Clrs.blue))),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-              border: BorderDirectional(
-                  bottom: BorderSide(color: Clrs.pink, width: 3))),
-          child: Text(
-            widget.correction,
-            style: TextStyle(color: Clrs.blue),
+              "Comment: ${widget.correction}",
+              style: TextStyle(color: Clrs.main),
+            ),
           ),
-        ),
-        const SizedBox(height: 5),
-        Visibility(
-          visible: widget.correct != null,
-          child: Container(
-              color: Colors.white,
-              child: isCorrect
-                  ? const Icon(Icons.check, color: Colors.green)
-                  : const Icon(
-                      Icons.close,
-                      color: Colors.red,
-                    )),
-        ),
-        const SizedBox(
-          height: 10,
-        )
-      ],
+          const SizedBox(
+            height: 10,
+          )
+        ],
+      ),
     );
   }
 }

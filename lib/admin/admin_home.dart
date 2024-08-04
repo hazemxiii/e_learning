@@ -1,5 +1,5 @@
 import 'package:e_learning/admin/add_exam.dart';
-import 'package:e_learning/admin/admin_exam_list.dart';
+import 'package:e_learning/admin/exam_list_admin.dart';
 import 'package:e_learning/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,10 +16,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Clrs.white,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Clrs.white,
-        foregroundColor: Clrs.blue,
+        backgroundColor: Colors.white,
+        foregroundColor: Clrs.main,
         centerTitle: true,
         title: const Text("Home"),
         actions: [
@@ -39,7 +39,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           children: [
             Container(
               decoration: BoxDecoration(
-                  color: Clrs.blue,
+                  color: Clrs.main,
                   borderRadius: const BorderRadius.all(Radius.circular(10))),
               width: MediaQuery.of(context).size.width / 6 * 5,
               padding: const EdgeInsets.symmetric(vertical: 50),
@@ -52,7 +52,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                       },
                       child: Text(
                         "Exams List",
-                        style: TextStyle(color: Clrs.pink, fontSize: 20),
+                        style: TextStyle(color: Clrs.sec, fontSize: 20),
                       )),
                   IconButton(
                     onPressed: () {
@@ -61,7 +61,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     },
                     icon: Icon(
                       Icons.add,
-                      color: Clrs.pink,
+                      color: Clrs.sec,
                     ),
                   )
                 ],

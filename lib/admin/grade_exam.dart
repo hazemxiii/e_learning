@@ -2,10 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
+// TODO: add written questions answers when adding an exam
+
 class GradeExamPage extends StatefulWidget {
   final String examName;
   final String uid;
-  const GradeExamPage({super.key, required this.examName, required this.uid});
+  final String fName;
+  final String lName;
+  const GradeExamPage(
+      {super.key,
+      required this.examName,
+      required this.uid,
+      required this.fName,
+      required this.lName});
 
   @override
   State<GradeExamPage> createState() => _GradeExamPageState();
@@ -17,9 +26,9 @@ class _GradeExamPageState extends State<GradeExamPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.uid),
+        title: Text("${widget.fName} ${widget.lName}"),
         backgroundColor: Colors.white,
-        foregroundColor: Clrs.blue,
+        foregroundColor: Clrs.main,
       ),
       body: Container(
         padding: const EdgeInsets.all(10),
@@ -28,8 +37,13 @@ class _GradeExamPageState extends State<GradeExamPage> {
             future: getExamAnswers(widget.examName, widget.uid),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Clrs.main,
+                    ),
+                  ),
                 );
               }
               List questions = snap.data!['questions'];
@@ -87,11 +101,11 @@ class McqQuestion extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-              color: Clrs.blue,
+              color: Clrs.main,
               borderRadius: const BorderRadius.all(Radius.circular(5))),
           child: Text(
             question,
-            style: TextStyle(color: Clrs.pink),
+            style: TextStyle(color: Clrs.sec),
           )),
       const SizedBox(height: 5),
       Wrap(children: [
@@ -102,7 +116,7 @@ class McqQuestion extends StatelessWidget {
             if (studentAnswers.contains(choice)) {
               backC = Colors.green;
             } else {
-              backC = Clrs.blue;
+              backC = Clrs.main;
             }
           } else {
             if (studentAnswers.contains(choice)) {
@@ -114,10 +128,10 @@ class McqQuestion extends StatelessWidget {
               padding: const EdgeInsets.all(5),
               margin: const EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
-                  border: Border.all(color: Clrs.blue),
+                  border: Border.all(color: Clrs.main),
                   color: backC,
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
-              child: Text(choice, style: TextStyle(color: Clrs.pink)));
+              child: Text(choice, style: TextStyle(color: Clrs.sec)));
         })
       ]),
       const SizedBox(height: 15),
@@ -175,21 +189,21 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Clrs.blue,
+                color: Clrs.main,
                 borderRadius: const BorderRadius.all(Radius.circular(5))),
             child: Text(
               widget.question,
-              style: TextStyle(color: Clrs.pink),
+              style: TextStyle(color: Clrs.sec),
             )),
         const SizedBox(height: 5),
         Container(
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Clrs.pink,
+                color: Clrs.sec,
                 borderRadius: const BorderRadius.all(Radius.circular(5))),
             child:
-                Text(widget.studentAnswer, style: TextStyle(color: Clrs.blue))),
+                Text(widget.studentAnswer, style: TextStyle(color: Clrs.main))),
         TextField(
           controller: correctionCont,
           onChanged: (v) {
@@ -199,13 +213,13 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
               });
             }
           },
-          style: TextStyle(color: Clrs.blue),
-          cursorColor: Clrs.blue,
+          style: TextStyle(color: Clrs.main),
+          cursorColor: Clrs.main,
           decoration: CustomDecoration.giveInputDecoration(
-              textC: Clrs.blue,
+              textC: Clrs.main,
               hint: "Correct the question",
               BorderType.under,
-              Clrs.pink,
+              Clrs.sec,
               false),
         ),
         const SizedBox(height: 5),
@@ -246,6 +260,9 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
                   color: !isWrong ? Colors.red : Colors.white,
                 ))
           ],
+        ),
+        const SizedBox(
+          height: 10,
         )
       ],
     );
