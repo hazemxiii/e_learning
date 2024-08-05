@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:e_learning/student/exam.dart';
 import 'package:e_learning/student/exam_preview.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class StudentExamListPage extends StatefulWidget {
@@ -15,12 +14,11 @@ class StudentExamListPage extends StatefulWidget {
 class _StudentExamListPageState extends State<StudentExamListPage> {
   @override
   Widget build(BuildContext context) {
-    FirebaseFirestore db = FirebaseFirestore.instance;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: SingleChildScrollView(
         child: FutureBuilder(
-            future: db.collection("exams").get(),
+            future: getExams(),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
                 return SizedBox(
@@ -67,8 +65,7 @@ class ExamRowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    FirebaseFirestore db = FirebaseFirestore.instance;
-    String uid = FirebaseAuth.instance.currentUser!.uid;
+    String uid = Dbs.auth.currentUser!.uid;
 
     // contains data about whether the exam is locked or can be opened
     List lockedData = isExamLocked(startDate, deadline);
@@ -96,7 +93,7 @@ class ExamRowWidget extends StatelessWidget {
                 examStatus == ExamStatus.waiting
                     ? Icon(Icons.lock, color: Clrs.sec)
                     : FutureBuilder(
-                        future: db
+                        future: Dbs.firestore
                             .doc("/exams/$examName/studentAnswers/$uid")
                             .get(),
                         builder: (context, snap) {
@@ -171,10 +168,11 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     int duration, String uid) async {
   if (examStatus == ExamStatus.waiting) return;
 
-  FirebaseFirestore db = FirebaseFirestore.instance;
-
-  DocumentReference userRef =
-      db.collection("exams").doc(exam).collection("studentAnswers").doc(uid);
+  DocumentReference userRef = Dbs.firestore
+      .collection("exams")
+      .doc(exam)
+      .collection("studentAnswers")
+      .doc(uid);
 
   var userDoc = await userRef.get();
 
@@ -211,4 +209,14 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => ExamPreviewPage(examName: exam, uid: uid)));
   }
+}
+
+Future<QuerySnapshot> getExams() async {
+  int level =
+      (await Dbs.firestore.doc("users/${Dbs.auth.currentUser!.uid}").get())
+          .get("level");
+  var result = Dbs.firestore
+      .collection("exams")
+      .where("level", whereIn: [0, level]).get();
+  return result;
 }

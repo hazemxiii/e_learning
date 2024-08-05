@@ -1,7 +1,6 @@
 import 'package:e_learning/admin/add_exam.dart';
 import 'package:e_learning/admin/exam_list_admin.dart';
 import 'package:e_learning/main.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import "../global.dart";
 
@@ -25,7 +24,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              FirebaseAuth.instance.signOut();
+              Dbs.auth.signOut();
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => const SignIn()));
             },

@@ -2,7 +2,6 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:e_learning/student/student_global.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,8 +17,6 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
-  final db = FirebaseFirestore.instance;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +25,7 @@ class _ExamPageState extends State<ExamPage> {
         actions: [
           IconButton(
               onPressed: () async {
-                String uid = FirebaseAuth.instance.currentUser!.uid;
+                String uid = Dbs.auth.currentUser!.uid;
                 String result =
                     await Provider.of<ExamNotifier>(context, listen: false)
                         .sendExam(uid, widget.name, false);
@@ -44,14 +41,19 @@ class _ExamPageState extends State<ExamPage> {
       ),
       body: SingleChildScrollView(
         child: FutureBuilder(
-            future: db
+            future: Dbs.firestore
                 .collection("exams")
                 .doc(widget.name)
                 .collection("questions")
                 .get(),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
+                return SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                      color: Clrs.main,
+                    )));
               }
 
               List<QueryDocumentSnapshot> questions = snap.data!.docs;

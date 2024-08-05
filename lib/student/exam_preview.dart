@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
@@ -242,13 +241,14 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
 }
 
 Future<Map> getExamAnswers(String examName, String uid) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
+  List questions = (await Dbs.firestore
+          .collection("exams")
+          .doc(examName)
+          .collection("questions")
+          .get())
+      .docs;
 
-  List questions =
-      (await db.collection("exams").doc(examName).collection("questions").get())
-          .docs;
-
-  var studentAnswerDoc = await db
+  var studentAnswerDoc = await Dbs.firestore
       .collection("exams")
       .doc(examName)
       .collection("studentAnswers")
@@ -263,10 +263,11 @@ Future<Map> getExamAnswers(String examName, String uid) async {
 
   try {
     grade = studentAnswerDoc.get("grade");
-    correctAnswers = (await db.collection("examsAnswers").doc(examName).get())
-        .get("correct");
-    totalMark =
-        (await db.doc("/exams/$examName").get()).get("marks")['totalMark'];
+    correctAnswers =
+        (await Dbs.firestore.collection("examsAnswers").doc(examName).get())
+            .get("correct");
+    totalMark = (await Dbs.firestore.doc("/exams/$examName").get())
+        .get("marks")['totalMark'];
   } catch (e) {
     graded = false;
   }

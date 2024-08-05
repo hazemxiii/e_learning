@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
 class ExamNotifier extends ChangeNotifier {
@@ -77,7 +78,7 @@ class ExamNotifier extends ChangeNotifier {
     if (getPercentageSolved != 1 && !force) {
       return "There are ${(1 - getPercentageSolved) * count} questions unsolved. Are you sure you want to submit?";
     }
-    DocumentReference studentAnswerRef = FirebaseFirestore.instance
+    DocumentReference studentAnswerRef = Dbs.firestore
         .collection("exams")
         .doc(exam)
         .collection("studentAnswers")

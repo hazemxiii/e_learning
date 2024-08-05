@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 class AnswersListPage extends StatefulWidget {
   final String examName;
-  const AnswersListPage({super.key, required this.examName});
+  final int level;
+  const AnswersListPage(
+      {super.key, required this.examName, required this.level});
 
   @override
   State<AnswersListPage> createState() => _AnswersListPageState();
@@ -157,20 +159,18 @@ class StudentAnswerRow extends StatelessWidget {
 }
 
 Future<Map> getExamResponses(String examName, bool withGrades) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
-
   List responses = [];
   Map names = {};
 
   if (!withGrades) {
-    responses = (await db
+    responses = (await Dbs.firestore
             .collection("exams")
             .doc(examName)
             .collection("studentAnswers")
-            .get())
+            .where("answer", isNotEqualTo: {}).get())
         .docs;
   } else {
-    responses = (await db
+    responses = (await Dbs.firestore
             .collection("exams")
             .doc(examName)
             .collection("studentAnswers")
@@ -179,18 +179,16 @@ Future<Map> getExamResponses(String examName, bool withGrades) async {
         .docs;
   }
 
-  names = (await db.doc("/users/public").get()).get("names");
+  names = (await Dbs.firestore.doc("/users/public").get()).get("names");
 
   return {"names": names, "responses": responses};
 }
 
 void deleteResponse(String examName, String uid) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
+  var batch = Dbs.firestore.batch();
+  batch.delete(Dbs.firestore.doc("/exams/$examName/studentAnswers/$uid"));
 
-  var batch = db.batch();
-  batch.delete(db.doc("/exams/$examName/studentAnswers/$uid"));
-
-  DocumentReference correctRef = db.doc("/examsAnswers/$examName");
+  DocumentReference correctRef = Dbs.firestore.doc("/examsAnswers/$examName");
 
   Map correct = (await correctRef.get()).get("correct");
 

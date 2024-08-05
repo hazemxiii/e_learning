@@ -1,7 +1,6 @@
 import 'package:e_learning/global.dart';
 import 'package:e_learning/main.dart';
-import 'package:e_learning/student/student_exam_list.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:e_learning/student/exam_list_student.dart';
 import 'package:flutter/material.dart';
 
 class StudentHomePage extends StatefulWidget {
@@ -33,7 +32,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
           actions: [
             IconButton(
               onPressed: () {
-                FirebaseAuth.instance.signOut();
+                Dbs.auth.signOut();
                 Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const SignIn()));
               },

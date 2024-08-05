@@ -13,7 +13,6 @@ class AdminExamListPage extends StatefulWidget {
 class _AdminExamListPageState extends State<AdminExamListPage> {
   @override
   Widget build(BuildContext context) {
-    FirebaseFirestore db = FirebaseFirestore.instance;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -26,7 +25,7 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
           color: Colors.white,
           child: SingleChildScrollView(
               child: StreamBuilder(
-            stream: db.collection("exams").snapshots(),
+            stream: Dbs.firestore.collection("exams").snapshots(),
             builder: (context, snap) {
               if (snap.data == null) {
                 return SizedBox(
@@ -41,6 +40,7 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
                 children: [
                   ...exams.map((exam) {
                     return ExamRow(
+                      level: exam.get("level"),
                       examName: exam.id,
                     );
                   })
@@ -54,14 +54,18 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
 
 class ExamRow extends StatelessWidget {
   final String examName;
-  const ExamRow({super.key, required this.examName});
+  final int level;
+  const ExamRow({super.key, required this.examName, required this.level});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => AnswersListPage(examName: examName)));
+            builder: (context) => AnswersListPage(
+                  examName: examName,
+                  level: level,
+                )));
       },
       child: Container(
           padding: const EdgeInsets.all(10),
@@ -74,13 +78,38 @@ class ExamRow extends StatelessWidget {
             children: [
               Text(examName, style: TextStyle(color: Clrs.sec)),
               PopupMenuButton(
-                  onSelected: (v) {
+                  onSelected: (v) async {
                     switch (v) {
                       case "grade":
                         gradeExam(examName);
                         break;
                       case "delete":
-                        deleteExam(examName);
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                backgroundColor: Colors.white,
+                                content: Text(
+                                    "Exam \"$examName\" will be deleted forever"),
+                                actions: [
+                                  MaterialButton(
+                                      textColor: Colors.white,
+                                      color: Clrs.main,
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Cancel")),
+                                  MaterialButton(
+                                      color: Colors.red,
+                                      textColor: Colors.white,
+                                      onPressed: () {
+                                        deleteExam(examName);
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Delete"))
+                                ],
+                              );
+                            });
                         break;
                     }
                   },
@@ -113,17 +142,16 @@ class ExamRow extends StatelessWidget {
 }
 
 void gradeExam(String examName) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
-
-  Map marks = (await db.doc("/exams/$examName").get()).get("marks");
+  Map marks = (await Dbs.firestore.doc("/exams/$examName").get()).get("marks");
 
   List studentAnswers =
-      (await db.collection("/exams/$examName/studentAnswers").get()).docs;
+      (await Dbs.firestore.collection("/exams/$examName/studentAnswers").get())
+          .docs;
 
   Map correctAnswers =
-      (await db.doc("/examsAnswers/$examName").get()).get("correct");
+      (await Dbs.firestore.doc("/examsAnswers/$examName").get()).get("correct");
 
-  var batch = db.batch();
+  var batch = Dbs.firestore.batch();
   for (int i = 0; i < studentAnswers.length; i++) {
     double grade = 0;
     Map answers = studentAnswers[i].get("answers");
@@ -151,28 +179,27 @@ void gradeExam(String examName) async {
         }
       }
     }
-    DocumentReference student =
-        db.doc("/exams/$examName/studentAnswers/${studentAnswers[i].id}");
+    DocumentReference student = Dbs.firestore
+        .doc("/exams/$examName/studentAnswers/${studentAnswers[i].id}");
     batch.update(student, {"grade": grade});
   }
   batch.commit().then((_) {}).catchError((e) => e);
 }
 
 deleteExam(String examName) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
-
   List<QueryDocumentSnapshot> questions =
-      (await db.collection("exams/$examName/questions").get()).docs;
+      (await Dbs.firestore.collection("exams/$examName/questions").get()).docs;
   for (int i = 0; i < questions.length; i++) {
     questions[i].reference.delete();
   }
 
   List<QueryDocumentSnapshot> responses =
-      (await db.collection("exams/$examName/studentAnswers").get()).docs;
+      (await Dbs.firestore.collection("exams/$examName/studentAnswers").get())
+          .docs;
   for (int i = 0; i < responses.length; i++) {
     responses[i].reference.delete();
   }
 
-  db.doc("exams/$examName").delete();
-  db.doc("examsAnswers/$examName").delete();
+  Dbs.firestore.doc("exams/$examName").delete();
+  Dbs.firestore.doc("examsAnswers/$examName").delete();
 }

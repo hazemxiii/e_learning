@@ -1,5 +1,5 @@
 import 'package:e_learning/admin/admin_home.dart';
-import 'package:e_learning/admin/admin_global.dart';
+import 'package:e_learning/admin/global_admin.dart';
 import 'package:e_learning/student/student_global.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
@@ -17,32 +17,34 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  User? user = Dbs.auth.currentUser;
+  Widget home = const SignIn();
+  if (user != null) {
+    if (await isAdmin(user.uid)) {
+      home = const AdminHomePage();
+    } else {
+      home = const StudentHomePage();
+    }
+  }
+
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AddExamNotifier()),
       ChangeNotifierProvider(create: (context) => ExamNotifier())
     ],
-    child: const MyApp(),
+    child: MyApp(home: home),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget home;
+  const MyApp({super.key, required this.home});
 
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const MaterialApp(
-        home: SignIn(),
-      );
-    } else {
-      return MaterialApp(
-        home: user.email == "e43304113@gmail.com"
-            ? const AdminHomePage()
-            : const StudentHomePage(),
-      );
-    }
+    return MaterialApp(
+      home: home,
+    );
   }
 }
 
@@ -77,13 +79,6 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
-    // UnderlineInputBorder focusedBorder = UnderlineInputBorder(
-    //     borderSide:
-    //         BorderSide(color: isError ? Colors.red : Clrs.blue, width: 3));
-
-    // UnderlineInputBorder enabledBorder = UnderlineInputBorder(
-    //     borderSide: BorderSide(color: isError ? Colors.red : Clrs.blue));
-
     List borders = CustomDecoration.giveInputDecoration(
         BorderType.under, Clrs.main, true,
         error: isError);
@@ -107,13 +102,6 @@ class _SignInState extends State<SignIn> {
                 style: TextStyle(color: Clrs.sec),
                 cursorColor: Clrs.sec,
                 controller: userNameCont,
-                // decoration: InputDecoration(
-                //     enabledBorder: enabledBorder,
-                //     focusedBorder: focusedBorder,
-                //     label: Text(
-                //       "UserName",
-                //       style: TextStyle(color: Clrs.blue),
-                //     )),
                 decoration: CustomDecoration.giveInputDecoration(
                     label: "UserName",
                     BorderType.under,
@@ -156,11 +144,12 @@ class _SignInState extends State<SignIn> {
                   InkWell(
                     onTap: () async {
                       try {
-                        UserCredential credentials = await FirebaseAuth.instance
+                        UserCredential credentials = await Dbs.auth
                             .signInWithEmailAndPassword(
                                 email: userNameCont.text,
                                 password: passCont.text);
-                        if (credentials.user!.email == "e43304113@gmail.com") {
+                        bool admin = await isAdmin(credentials.user!.uid);
+                        if (admin) {
                           if (context.mounted) {
                             Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
@@ -212,4 +201,8 @@ class _SignInState extends State<SignIn> {
       ),
     );
   }
+}
+
+Future<bool> isAdmin(String uid) async {
+  return (await Dbs.firestore.doc("users/$uid").get()).get("role") == "admin";
 }

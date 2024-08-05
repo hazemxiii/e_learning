@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
-// TODO: add written questions answers when adding an exam
-
 class GradeExamPage extends StatefulWidget {
   final String examName;
   final String uid;
@@ -270,13 +268,14 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
 }
 
 Future<Map> getExamAnswers(String examName, String uid) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
+  List questions = (await Dbs.firestore
+          .collection("exams")
+          .doc(examName)
+          .collection("questions")
+          .get())
+      .docs;
 
-  List questions =
-      (await db.collection("exams").doc(examName).collection("questions").get())
-          .docs;
-
-  Map studentAnswers = (await db
+  Map studentAnswers = (await Dbs.firestore
           .collection("exams")
           .doc(examName)
           .collection("studentAnswers")
@@ -285,7 +284,8 @@ Future<Map> getExamAnswers(String examName, String uid) async {
       .get("answers");
 
   Map correctAnswers =
-      (await db.collection("examsAnswers").doc(examName).get()).get("correct");
+      (await Dbs.firestore.collection("examsAnswers").doc(examName).get())
+          .get("correct");
 
   return {
     "questions": questions,
@@ -296,9 +296,7 @@ Future<Map> getExamAnswers(String examName, String uid) async {
 
 Future<bool> markQuestion(BuildContext context, String examName, String uid,
     String question, String correction, bool correct) async {
-  FirebaseFirestore db = FirebaseFirestore.instance;
-
-  DocumentReference answerDoc = db.doc("/examsAnswers/$examName");
+  DocumentReference answerDoc = Dbs.firestore.doc("/examsAnswers/$examName");
 
   Map answers = (await answerDoc.get()).get("correct");
 

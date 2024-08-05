@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import "package:e_learning/global.dart";
 
@@ -9,7 +8,7 @@ class AddExamNotifier extends ChangeNotifier {
   DateTime? startDate;
   DateTime? deadline;
   int offset = 0;
-  double totalMark = 0;
+  // double totalMark = 0;
 
   void setDuration(int duration) {
     if (startDate != null && deadline != null) {
@@ -67,11 +66,13 @@ class AddExamNotifier extends ChangeNotifier {
         "choices": [""],
         "correct": [],
         "isMulti": false,
-        "mark": 0
+        "mark": 1
       });
     } else if (type == QuestionTypes.written) {
-      questions.add({"question": "", "type": type, "mark": 0});
+      questions.add({"question": "", "type": type, "mark": 1});
     }
+
+    // totalMark++;
 
     notifyListeners();
   }
@@ -79,14 +80,14 @@ class AddExamNotifier extends ChangeNotifier {
   void updateQuestion(int index, String key, var value) {
     /// updates the question itself
     if (key == "mark") {
-      totalMark -= questions[index][key];
-      totalMark += value;
+      // totalMark -= questions[index][key];
+      // totalMark += value;
     }
     questions[index][key] = value;
   }
 
   void deleteQuestion(int index) {
-    totalMark -= questions[index]["mark"];
+    // totalMark -= questions[index]["mark"];
     questions.removeAt(index);
     notifyListeners();
   }
@@ -99,18 +100,23 @@ class AddExamNotifier extends ChangeNotifier {
 
   Future<String> sendExam() async {
     /// sends the exam to the db
-
     if (examName == "") {
       return "Exam must have a unique non-empty name";
     }
+
+    bool nameExists = (await Dbs.firestore.doc("exams/$examName").get()).exists;
+    if (nameExists) {
+      return "Duplicated exam name";
+    }
+
     if (questions.isEmpty) {
       return "Exam must contain at least 1 question";
     }
-    FirebaseFirestore db = FirebaseFirestore.instance;
-    final batch = db.batch();
+    final batch = Dbs.firestore.batch();
 
-    final examRef = db.collection("exams").doc(examName);
-    final examAnswersRef = db.collection("examsAnswers").doc(examName);
+    final examRef = Dbs.firestore.collection("exams").doc(examName);
+    final examAnswersRef =
+        Dbs.firestore.collection("examsAnswers").doc(examName);
 
     // create the documents for the exam and a separate one for answers
     batch.set(examRef, {
@@ -119,7 +125,7 @@ class AddExamNotifier extends ChangeNotifier {
       "deadline": deadline,
     });
     Map correctAnswers = {};
-    Map marks = {"totalMark": totalMark};
+    Map marks = {"totalMark": 0};
 
     for (int i = 0; i < questions.length; i++) {
       Map questionMap = questions[i];
@@ -131,6 +137,7 @@ class AddExamNotifier extends ChangeNotifier {
       final questionRef = examRef.collection("questions").doc(question);
 
       marks[question] = questionMap['mark'];
+      marks["totalMark"] += marks[question];
 
       QuestionTypes type = questionMap['type'];
       if (type == QuestionTypes.mcq) {
@@ -153,8 +160,8 @@ class AddExamNotifier extends ChangeNotifier {
           "isMulti": isMulti
         });
         correctAnswers[question] = correct;
-        // batch.set(questionAnswerRef, {"correct": correct});
       } else {
+        correctAnswers[question] = {};
         batch.set(questionRef, {"type": "written"});
       }
     }
@@ -163,6 +170,14 @@ class AddExamNotifier extends ChangeNotifier {
     batch.commit().then((_) {}, onError: (e) {
       return e.toString();
     });
+
+    questions = [];
+    duration = 0;
+    examName = "";
+    startDate;
+    deadline;
+    offset = 0;
+    // totalMark = 0;
 
     return "Saved";
   }

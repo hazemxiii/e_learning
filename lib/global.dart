@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 enum BorderType { out, under }
@@ -7,6 +9,11 @@ enum QuestionTypes { written, mcq }
 enum DateType { startDate, deadline }
 
 enum ExamStatus { passed, waiting, open }
+
+class Dbs {
+  static FirebaseFirestore firestore = FirebaseFirestore.instance;
+  static FirebaseAuth auth = FirebaseAuth.instance;
+}
 
 class Clrs {
   static Color main = const Color.fromRGBO(128, 147, 241, 1);

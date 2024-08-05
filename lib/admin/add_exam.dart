@@ -1,4 +1,4 @@
-import 'package:e_learning/admin/admin_global.dart';
+import 'package:e_learning/admin/global_admin.dart';
 import 'package:flutter/material.dart';
 import "package:e_learning/global.dart";
 import 'package:flutter/services.dart';
@@ -601,6 +601,10 @@ void showSendExamResult(
     animType: AnimType.rightSlide,
     title: title,
     desc: desc,
-    btnOkOnPress: () {},
+    btnOkOnPress: type == DialogType.success
+        ? () {
+            Navigator.of(context).pop();
+          }
+        : () {},
   ).show();
 }
