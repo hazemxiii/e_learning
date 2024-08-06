@@ -14,6 +14,7 @@ class AddExamPage extends StatefulWidget {
 
 class _AddExamPageState extends State<AddExamPage> {
   late ScrollController scrollController;
+  int level = 0;
 
   @override
   void initState() {
@@ -58,19 +59,81 @@ class _AddExamPageState extends State<AddExamPage> {
             controller: scrollController,
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                margin: const EdgeInsets.only(left: 10, bottom: 10),
-                width: 250,
-                child: TextField(
-                  onChanged: (v) {
-                    Provider.of<AddExamNotifier>(context, listen: false)
-                        .updateExamName(v);
-                  },
-                  style: TextStyle(color: Clrs.main),
-                  cursorColor: Clrs.main,
-                  decoration: CustomDecoration.giveInputDecoration(
-                      label: "Exam Name", BorderType.under, Clrs.main, false),
-                ),
+              Row(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(left: 10, bottom: 10),
+                    width: 250,
+                    child: TextField(
+                      onChanged: (v) {
+                        Provider.of<AddExamNotifier>(context, listen: false)
+                            .updateExamName(v);
+                      },
+                      style: TextStyle(color: Clrs.main),
+                      cursorColor: Clrs.main,
+                      decoration: CustomDecoration.giveInputDecoration(
+                          label: "Exam Name",
+                          BorderType.under,
+                          Clrs.main,
+                          false),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  DropdownButton(
+                      padding: const EdgeInsets.all(5),
+                      value: level,
+                      items: [
+                        DropdownMenuItem(
+                            value: 0,
+                            child: Text(
+                              "All",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 1,
+                            child: Text(
+                              "1st prep",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 2,
+                            child: Text(
+                              "2nd prep",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 3,
+                            child: Text(
+                              "3rd prep",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 4,
+                            child: Text(
+                              "1st sec",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 5,
+                            child: Text(
+                              "2nd sec",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                        DropdownMenuItem(
+                            value: 6,
+                            child: Text(
+                              "3rd sec",
+                              style: TextStyle(color: Clrs.main),
+                            )),
+                      ],
+                      onChanged: (v) {
+                        setState(() {
+                          Provider.of<AddExamNotifier>(context, listen: false)
+                              .setLevel(v!);
+                          level = v;
+                        });
+                      })
+                ],
               ),
               const DurationPicker(),
               const Row(children: [

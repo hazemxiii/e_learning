@@ -8,7 +8,11 @@ class AddExamNotifier extends ChangeNotifier {
   DateTime? startDate;
   DateTime? deadline;
   int offset = 0;
-  // double totalMark = 0;
+  int level = 0;
+
+  void setLevel(int level) {
+    this.level = level;
+  }
 
   void setDuration(int duration) {
     if (startDate != null && deadline != null) {
@@ -165,7 +169,7 @@ class AddExamNotifier extends ChangeNotifier {
         batch.set(questionRef, {"type": "written"});
       }
     }
-    batch.update(examRef, {"marks": marks});
+    batch.update(examRef, {"marks": marks, "level": level});
     batch.set(examAnswersRef, {"correct": correctAnswers});
     batch.commit().then((_) {}, onError: (e) {
       return e.toString();
@@ -177,6 +181,7 @@ class AddExamNotifier extends ChangeNotifier {
     startDate;
     deadline;
     offset = 0;
+    level = 0;
     // totalMark = 0;
 
     return "Saved";

@@ -218,5 +218,7 @@ Future<QuerySnapshot> getExams() async {
   var result = Dbs.firestore
       .collection("exams")
       .where("level", whereIn: [0, level]).get();
+
+  print(level);
   return result;
 }
