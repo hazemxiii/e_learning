@@ -40,7 +40,7 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
                 children: [
                   ...exams.map((exam) {
                     return ExamRow(
-                      level: exam.get("level"),
+                      examLevel: exam.get("level"),
                       examName: exam.id,
                     );
                   })
@@ -54,8 +54,8 @@ class _AdminExamListPageState extends State<AdminExamListPage> {
 
 class ExamRow extends StatelessWidget {
   final String examName;
-  final int level;
-  const ExamRow({super.key, required this.examName, required this.level});
+  final int examLevel;
+  const ExamRow({super.key, required this.examName, required this.examLevel});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,6 @@ class ExamRow extends StatelessWidget {
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => AnswersListPage(
                   examName: examName,
-                  level: level,
                 )));
       },
       child: Container(
@@ -142,9 +141,11 @@ class ExamRow extends StatelessWidget {
 }
 
 void gradeExam(String examName) async {
-  Map marks = (await Dbs.firestore.doc("/exams/$examName").get()).get("marks");
+  /// grades the exam for all users
+  Map questionsMarks =
+      (await Dbs.firestore.doc("/exams/$examName").get()).get("marks");
 
-  List studentAnswers =
+  List studentsAnswers =
       (await Dbs.firestore.collection("/exams/$examName/studentAnswers").get())
           .docs;
 
@@ -152,35 +153,39 @@ void gradeExam(String examName) async {
       (await Dbs.firestore.doc("/examsAnswers/$examName").get()).get("correct");
 
   var batch = Dbs.firestore.batch();
-  for (int i = 0; i < studentAnswers.length; i++) {
+  // loop each student
+  for (int i = 0; i < studentsAnswers.length; i++) {
     double grade = 0;
-    Map answers = studentAnswers[i].get("answers");
-    List questions = answers.keys.toList();
-    for (int j = 0; j < questions.length; j++) {
-      var answer = answers[questions[j]];
-      if (answer == null) {
+    Map studentAnswers = studentsAnswers[i].get("answers");
+    List answeredQuestions = studentAnswers.keys.toList();
+    for (int j = 0; j < answeredQuestions.length; j++) {
+      var studentAnswer = studentAnswers[answeredQuestions[j]];
+      // if the user didn't answer the question, don't mark it
+      if (studentAnswer == null) {
         continue;
       }
-      var correct = correctAnswers[questions[j]];
-
-      if (correct.runtimeType == List<dynamic>) {
-        if (correct.length >= answer.length) {
-          for (int k = 0; k < answer.length; k++) {
-            if (correct.contains(answer[k])) {
-              grade = grade + marks[questions[j]] / correct.length;
+      var correctAnswer = correctAnswers[answeredQuestions[j]];
+// if the answer is a list, then it's mcq
+      if (correctAnswer.runtimeType == List<dynamic>) {
+        if (correctAnswer.length >= studentAnswer.length) {
+          for (int k = 0; k < studentAnswer.length; k++) {
+            if (correctAnswer.contains(studentAnswer[k])) {
+              grade = grade +
+                  questionsMarks[answeredQuestions[j]] / correctAnswer.length;
             }
           }
         }
       } else {
-        if (correct[studentAnswers[i].id] != null) {
-          if (correct[studentAnswers[i].id]['correct']) {
-            grade += marks[questions[j]];
+        if (correctAnswer[studentsAnswers[i].id] != null) {
+          // if the teacher marked it as correct, add its mark
+          if (correctAnswer[studentsAnswers[i].id]['correct']) {
+            grade += questionsMarks[answeredQuestions[j]];
           }
         }
       }
     }
     DocumentReference student = Dbs.firestore
-        .doc("/exams/$examName/studentAnswers/${studentAnswers[i].id}");
+        .doc("/exams/$examName/studentAnswers/${studentsAnswers[i].id}");
     batch.update(student, {"grade": grade});
   }
   batch.commit().then((_) {}).catchError((e) => e);
@@ -189,6 +194,7 @@ void gradeExam(String examName) async {
 deleteExam(String examName) async {
   List<QueryDocumentSnapshot> questions =
       (await Dbs.firestore.collection("exams/$examName/questions").get()).docs;
+  // delete each question
   for (int i = 0; i < questions.length; i++) {
     questions[i].reference.delete();
   }
@@ -196,6 +202,7 @@ deleteExam(String examName) async {
   List<QueryDocumentSnapshot> responses =
       (await Dbs.firestore.collection("exams/$examName/studentAnswers").get())
           .docs;
+  // delete each student response
   for (int i = 0; i < responses.length; i++) {
     responses[i].reference.delete();
   }

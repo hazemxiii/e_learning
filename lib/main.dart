@@ -1,6 +1,5 @@
 import 'package:e_learning/admin/admin_home.dart';
 import 'package:e_learning/admin/global_admin.dart';
-import 'package:e_learning/student/student_global.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,10 +7,6 @@ import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'global.dart';
 import "package:provider/provider.dart";
-
-/*
-e43304113@gmail.com
-*/
 
 void main() async {
   await Firebase.initializeApp(
@@ -30,7 +25,7 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AddExamNotifier()),
-      ChangeNotifierProvider(create: (context) => ExamNotifier())
+      // ChangeNotifierProvider(create: (context) => ExamNotifier())
     ],
     child: MyApp(home: home),
   ));
@@ -177,7 +172,7 @@ class _SignInState extends State<SignIn> {
                         color: Clrs.main,
                       ),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 150),
+                          vertical: 10, horizontal: 50),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

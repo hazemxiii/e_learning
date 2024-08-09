@@ -70,8 +70,11 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                         studentAnswers: studentAnswers[question.id] ?? [],
                       );
                     } else {
-                      Map answerData =
-                          correctAnswers[question.id][widget.uid] ?? {};
+                      Map answerData = {};
+                      if (correctAnswers.isNotEmpty) {
+                        answerData =
+                            correctAnswers[question.id][widget.uid] ?? {};
+                      }
                       return WrittenQuestion(
                         uid: widget.uid,
                         examName: widget.examName,

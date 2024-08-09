@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 
 class AnswersListPage extends StatefulWidget {
   final String examName;
-  final int level;
-  const AnswersListPage(
-      {super.key, required this.examName, required this.level});
+  const AnswersListPage({super.key, required this.examName});
 
   @override
   State<AnswersListPage> createState() => _AnswersListPageState();
@@ -25,6 +23,14 @@ class _AnswersListPageState extends State<AnswersListPage> {
         backgroundColor: Colors.white,
         foregroundColor: Clrs.main,
         actions: [
+          TextButton(
+              onPressed: () {
+                showDidntAnswer(context, widget.examName);
+              },
+              child: Text(
+                "Didn't answer",
+                style: TextStyle(color: Clrs.main),
+              )),
           Switch(
               thumbColor: WidgetStatePropertyAll(Clrs.main),
               value: gradesShown,
@@ -52,14 +58,14 @@ class _AnswersListPageState extends State<AnswersListPage> {
                       ));
                 }
                 List studentsAnswers = snap.data!['responses'];
-                Map names = snap.data!['names'];
+                Map studentNames = snap.data!['names'];
                 return Column(
                   children: [
                     ...studentsAnswers.map((student) {
                       return StudentAnswerRow(
                         examName: widget.examName,
                         studentID: student.id,
-                        name: names[student.id],
+                        studentName: studentNames[student.id],
                         showGrade: gradesShown,
                         grade: student.data()["grade"],
                       );
@@ -77,7 +83,8 @@ class StudentAnswerRow extends StatelessWidget {
   final String examName;
   final String studentID;
   final double? grade;
-  final List name;
+  // the name is a list containing first, last name
+  final List studentName;
   final bool showGrade;
   const StudentAnswerRow(
       {super.key,
@@ -85,12 +92,12 @@ class StudentAnswerRow extends StatelessWidget {
       required this.examName,
       required this.grade,
       required this.showGrade,
-      required this.name});
+      required this.studentName});
 
   @override
   Widget build(BuildContext context) {
-    String fName = name[0];
-    String lName = name[1];
+    String fName = studentName[0];
+    String lName = studentName[1];
     return InkWell(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(builder: (context) {
@@ -160,14 +167,15 @@ class StudentAnswerRow extends StatelessWidget {
 
 Future<Map> getExamResponses(String examName, bool withGrades) async {
   List responses = [];
-  Map names = {};
+  Map studentNames = {};
 
   if (!withGrades) {
     responses = (await Dbs.firestore
             .collection("exams")
             .doc(examName)
             .collection("studentAnswers")
-            .where("answer", isNotEqualTo: {}).get())
+            .where("answer")
+            .get())
         .docs;
   } else {
     responses = (await Dbs.firestore
@@ -179,17 +187,19 @@ Future<Map> getExamResponses(String examName, bool withGrades) async {
         .docs;
   }
 
-  names = (await Dbs.firestore.doc("/users/public").get()).get("names");
+  studentNames = (await Dbs.firestore.doc("/users/public").get()).get("names");
 
-  return {"names": names, "responses": responses};
+  return {"names": studentNames, "responses": responses};
 }
 
 void deleteResponse(String examName, String uid) async {
+  // since there are multiple files to delete, place them in a batch
   var batch = Dbs.firestore.batch();
   batch.delete(Dbs.firestore.doc("/exams/$examName/studentAnswers/$uid"));
 
   DocumentReference correctRef = Dbs.firestore.doc("/examsAnswers/$examName");
 
+// delete only the user id from correct written questions
   Map correct = (await correctRef.get()).get("correct");
 
   for (int i = 0; i < correct.entries.length; i++) {
@@ -198,4 +208,54 @@ void deleteResponse(String examName, String uid) async {
   batch.update(correctRef, {"correct": correct});
 
   batch.commit().then((_) {}).catchError((e) => e);
+}
+
+void showDidntAnswer(BuildContext context, String examName) async {
+  /// shows users who didn't answer the exam
+  int examLevel =
+      (await Dbs.firestore.doc("/exams/$examName").get()).get("level");
+
+// students who are supposed to answer the exam
+  List<DocumentSnapshot> allEligibleStudents = [];
+  if (examLevel != 0) {
+    allEligibleStudents = (await Dbs.firestore
+            .collection("users")
+            .where("level", whereIn: [examLevel]).get())
+        .docs;
+  } else {
+    allEligibleStudents = (await Dbs.firestore
+            .collection("users")
+            .where("level", isGreaterThanOrEqualTo: 0)
+            .get())
+        .docs;
+  }
+
+  List<String> answered =
+      (await Dbs.firestore.collection("/exams/$examName/studentAnswers").get())
+          .docs
+          .map(
+            (e) => e.id,
+          )
+          .toList();
+
+  if (context.mounted) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ...allEligibleStudents.map((e) {
+                    if (!answered.contains(e.id)) {
+                      return Text(e.get("email"));
+                    }
+                    return Container();
+                  })
+                ],
+              ),
+            ),
+          );
+        });
+  }
 }

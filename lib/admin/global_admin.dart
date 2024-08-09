@@ -3,10 +3,11 @@ import "package:e_learning/global.dart";
 
 class AddExamNotifier extends ChangeNotifier {
   List<Map> questions = [];
-  int duration = 0;
+  int examDuration = 0;
   String examName = "";
   DateTime? startDate;
   DateTime? deadline;
+  // to return the cursor where it was when editing a choice
   int offset = 0;
   int level = 0;
 
@@ -15,6 +16,7 @@ class AddExamNotifier extends ChangeNotifier {
   }
 
   void setDuration(int duration) {
+    // if the duration is larger than the difference between start and deadline dates, don't change it
     if (startDate != null && deadline != null) {
       if (deadline!.difference(startDate!).inMinutes < duration) {
         return;
@@ -22,24 +24,25 @@ class AddExamNotifier extends ChangeNotifier {
     }
 
     if (duration >= 0) {
-      this.duration = duration;
+      examDuration = duration;
     }
     notifyListeners();
   }
 
   bool setDate(DateType type, DateTime date) {
+    // check if the difference between dates is not negative
     if (type == DateType.startDate) {
       if (deadline != null) {
         Duration diff = deadline!.difference(date);
         if (diff.isNegative) {
           return false;
         }
-        if (diff.inMinutes < duration) {
-          duration = diff.inMinutes;
+        // if the difference is smaller than the duration, change the duration to fit in the difference
+        if (diff.inMinutes < examDuration) {
+          examDuration = diff.inMinutes;
           notifyListeners();
         }
       }
-
       startDate = date;
     } else if (type == DateType.deadline) {
       if (startDate != null) {
@@ -47,8 +50,8 @@ class AddExamNotifier extends ChangeNotifier {
         if (diff.isNegative) {
           return false;
         }
-        if (diff.inMinutes < duration) {
-          duration = diff.inMinutes;
+        if (diff.inMinutes < examDuration) {
+          examDuration = diff.inMinutes;
           notifyListeners();
         }
       }
@@ -82,16 +85,10 @@ class AddExamNotifier extends ChangeNotifier {
   }
 
   void updateQuestion(int index, String key, var value) {
-    /// updates the question itself
-    if (key == "mark") {
-      // totalMark -= questions[index][key];
-      // totalMark += value;
-    }
     questions[index][key] = value;
   }
 
   void deleteQuestion(int index) {
-    // totalMark -= questions[index]["mark"];
     questions.removeAt(index);
     notifyListeners();
   }
@@ -124,7 +121,7 @@ class AddExamNotifier extends ChangeNotifier {
 
     // create the documents for the exam and a separate one for answers
     batch.set(examRef, {
-      "duration": duration,
+      "duration": examDuration,
       "startDate": startDate,
       "deadline": deadline,
     });
@@ -140,6 +137,7 @@ class AddExamNotifier extends ChangeNotifier {
       }
       final questionRef = examRef.collection("questions").doc(question);
 
+      // add marks to a dictionary and update total mark with each question
       marks[question] = questionMap['mark'];
       marks["totalMark"] += marks[question];
 
@@ -175,14 +173,14 @@ class AddExamNotifier extends ChangeNotifier {
       return e.toString();
     });
 
+    // set things back to what they were so it doesn't interfere with next sent exam
     questions = [];
-    duration = 0;
+    examDuration = 0;
     examName = "";
     startDate;
     deadline;
     offset = 0;
     level = 0;
-    // totalMark = 0;
 
     return "Saved";
   }
@@ -249,6 +247,6 @@ class AddExamNotifier extends ChangeNotifier {
   }
 
   List<Map> get getQuestions => questions;
-  int get getDuration => duration;
+  int get getDuration => examDuration;
   int get getOffset => offset;
 }

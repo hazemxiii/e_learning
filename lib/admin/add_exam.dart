@@ -13,7 +13,9 @@ class AddExamPage extends StatefulWidget {
 }
 
 class _AddExamPageState extends State<AddExamPage> {
+  // to scroll down when a new question is added
   late ScrollController scrollController;
+  // the exam level
   int level = 0;
 
   @override
@@ -186,6 +188,7 @@ class _AddExamPageState extends State<AddExamPage> {
 }
 
 class WrittenQuestionWidget extends StatefulWidget {
+  // question index
   final int index;
   const WrittenQuestionWidget({super.key, required this.index});
 
@@ -273,7 +276,9 @@ class _WrittenQuestionWidgetState extends State<WrittenQuestionWidget> {
 }
 
 class McqQuestionWidget extends StatefulWidget {
+  // question index
   final int index;
+  // if multiple choices are allowed for this question
   final bool isMulti;
   const McqQuestionWidget(
       {super.key, required this.index, required this.isMulti});
@@ -383,7 +388,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
                     // is a correct answer to the question
                     isCorrect: qstn.choiceIsCorrect(widget.index, choiceIndex),
                     text: choice,
-                    index: widget.index,
+                    questionIndex: widget.index,
                     choiceIndex: choiceIndex,
                     offset: qstn.getOffset);
               }),
@@ -396,6 +401,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
 }
 
 class AddButtonWidget extends StatefulWidget {
+  /// to add new questions to the exam
   final Function onTap;
   final Icon icon;
   const AddButtonWidget({super.key, required this.onTap, required this.icon});
@@ -422,14 +428,15 @@ class _AddButtonWidgetState extends State<AddButtonWidget> {
 }
 
 class ChoiceWidget extends StatefulWidget {
-  final int index;
+  final int questionIndex;
   final int choiceIndex;
   final String text;
   final bool isCorrect;
+  // to get the position of the cursor in the choice
   final int offset;
   const ChoiceWidget({
     super.key,
-    required this.index,
+    required this.questionIndex,
     required this.choiceIndex,
     required this.text,
     required this.isCorrect,
@@ -476,7 +483,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
               value: widget.isCorrect,
               onChanged: (v) {
                 Provider.of<AddExamNotifier>(context, listen: false)
-                    .selectChoice(widget.index, widget.choiceIndex, v!);
+                    .selectChoice(widget.questionIndex, widget.choiceIndex, v!);
               },
             ),
             focusedBorder: UnderlineInputBorder(
@@ -486,7 +493,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
             suffix: IconButton(
               onPressed: () {
                 Provider.of<AddExamNotifier>(context, listen: false)
-                    .deleteChoice(widget.index, widget.choiceIndex);
+                    .deleteChoice(widget.questionIndex, widget.choiceIndex);
               },
               icon: Icon(
                 Icons.close,
@@ -495,7 +502,7 @@ class _ChoiceWidgetState extends State<ChoiceWidget> {
             )),
         onChanged: (v) {
           Provider.of<AddExamNotifier>(context, listen: false).updateChoice(
-              widget.index,
+              widget.questionIndex,
               widget.choiceIndex,
               v,
               controller.selection.baseOffset);
@@ -630,7 +637,7 @@ class _DurationPickerState extends State<DurationPicker> {
                           .setDuration(duration);
                     } else {
                       Provider.of<AddExamNotifier>(context, listen: false)
-                          .setDuration(examNot.duration);
+                          .setDuration(examNot.examDuration);
                     }
                   }
                 },
@@ -658,12 +665,14 @@ class _DurationPickerState extends State<DurationPicker> {
 
 void showSendExamResult(
     BuildContext context, String title, String desc, DialogType type) {
+  /// when the user submits, show them the answer
   AwesomeDialog(
     context: context,
     dialogType: type,
     animType: AnimType.rightSlide,
     title: title,
     desc: desc,
+    // if it's a success, pop the page
     btnOkOnPress: type == DialogType.success
         ? () {
             Navigator.of(context).pop();

@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:e_learning/student/exam.dart';
 import 'package:e_learning/student/exam_preview.dart';
+import 'package:e_learning/student/student_global.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class StudentExamListPage extends StatefulWidget {
   const StudentExamListPage({super.key});
@@ -74,7 +76,7 @@ class ExamRowWidget extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        openExam(context, examStatus, examName, duration, uid);
+        openExam(context, examStatus, examName, duration, uid, deadline);
       },
       child: Column(
         children: [
@@ -165,7 +167,7 @@ List isExamLocked(Timestamp? start, Timestamp? end) {
 }
 
 void openExam(BuildContext context, ExamStatus examStatus, String exam,
-    int duration, String uid) async {
+    int duration, String uid, Timestamp? deadline) async {
   if (examStatus == ExamStatus.waiting) return;
 
   DocumentReference userRef = Dbs.firestore
@@ -178,28 +180,55 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
 
   if (!userDoc.exists) {
     if (examStatus == ExamStatus.passed) {
-      userRef.set({"firstOpen": null, "answers": {}});
+      userRef.set({"firstOpen": null, "answers": {}, "submit": false});
       if (context.mounted) {
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => ExamPreviewPage(examName: exam, uid: uid)));
       }
       return;
     }
-    userRef.set({"firstOpen": DateTime.now(), "answers": {}});
+    DateTime now = DateTime.now();
+    userRef.set({"firstOpen": now, "answers": {}, "submit": false});
     if (context.mounted) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+                create: (_) => ExamNotifier(),
+                child: ExamPage(
+                  name: exam,
+                  firstOpen: now,
+                  duration: duration,
+                  deadline: deadline,
+                ),
+              )));
     }
     return;
   }
+  if (userDoc.get("submit")) {
+    if (context.mounted) {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ExamPreviewPage(examName: exam, uid: uid)));
+    }
+    return;
+  }
+
   if (userDoc.get("firstOpen") != null) {
+    DateTime now = DateTime.now();
+    deadline = deadline ?? Timestamp.fromDate(now);
     DateTime firstOpen = userDoc.get("firstOpen").toDate();
-    if ((DateTime.now().difference(firstOpen).inMinutes < duration ||
-            duration == 0) &&
-        userDoc.get("answers").isEmpty) {
+    if ((now.difference(firstOpen).inMinutes < duration || duration == 0) &&
+        !now.isAfter(deadline.toDate())) {
       if (context.mounted) {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => ExamPage(name: exam)));
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+                  create: (_) => ExamNotifier(),
+                  child: ExamPage(
+                    name: exam,
+                    firstOpen: firstOpen,
+                    duration: duration,
+                    deadline:
+                        deadline == Timestamp.fromDate(now) ? null : deadline,
+                  ),
+                )));
       }
       return;
     }
@@ -219,6 +248,5 @@ Future<QuerySnapshot> getExams() async {
       .collection("exams")
       .where("level", whereIn: [0, level]).get();
 
-  print(level);
   return result;
 }

@@ -5,11 +5,48 @@ import 'package:flutter/material.dart';
 class ExamNotifier extends ChangeNotifier {
   int currentQuestion = 0;
   Map answers = {};
+  Duration? end;
+  int endMinutes = 0;
+  int endSeconds = 0;
   // questions count
   int count = 0;
-
+  double legendHeight = 0;
   void setQuestionsCount(int count) {
     this.count = count;
+  }
+
+  void setEnd(Duration end) {
+    this.end = end;
+    endMinutes = end.inMinutes;
+    endSeconds = end.inSeconds - endMinutes * 60;
+    notifyListeners();
+    decrementTime();
+  }
+
+  void decrementTime() {
+    if (endMinutes <= 0 && endSeconds <= 0) return;
+
+    endSeconds--;
+    if (endSeconds < 0) {
+      endSeconds = 59;
+      endMinutes = endMinutes - 1;
+    }
+    notifyListeners();
+    Future.delayed(const Duration(seconds: 1), decrementTime);
+  }
+
+  void setLegendHeight(double height) {
+    legendHeight = height;
+    notifyListeners();
+  }
+
+  bool isAnswered(String question) {
+    return answers[question] != null;
+  }
+
+  void goToQuestion(int index) {
+    currentQuestion = index;
+    notifyListeners();
   }
 
   void selectAnswer(String question, String answer, bool isMulti) {
@@ -37,14 +74,18 @@ class ExamNotifier extends ChangeNotifier {
 
   void changeWrittenAnswer(String question, String answer) {
     /// change written questions answers as the student type
-
     // if the question has no answers, remove it from answered questions
+    String oldAnswer = answers[question] ?? "";
     if (answer == "") {
       answers.remove(question);
+      notifyListeners();
     } else {
       answers[question] = answer;
     }
-    notifyListeners();
+    if (oldAnswer == "") {
+      notifyListeners();
+    }
+    // notifyListeners();
   }
 
   bool isSelected(String question, String answer) {
@@ -84,9 +125,9 @@ class ExamNotifier extends ChangeNotifier {
         .collection("studentAnswers")
         .doc(uid);
 
-    studentAnswerRef.update({"answers": answers});
+    studentAnswerRef.update({"answers": answers, "submit": true});
 
-    return "Done";
+    return "Saved";
   }
 
   String getWrittenAnswer(String question) {
@@ -96,6 +137,25 @@ class ExamNotifier extends ChangeNotifier {
     return answers[question];
   }
 
+  void delete() {
+    currentQuestion = 0;
+    answers = {};
+    end = null;
+    endMinutes = 0;
+    endSeconds = 0;
+    count = 0;
+    legendHeight = 0;
+  }
+
+  @override
+  void dispose() {
+    delete();
+    super.dispose();
+  }
+
   int get getCurrentQuestion => currentQuestion;
   double get getPercentageSolved => answers.length / count;
+  double get getLegendHeight => legendHeight;
+  String get getEndMinutes => end != null ? "$endMinutes".padLeft(2, "0") : "∞";
+  String get getEndSeconds => end != null ? "$endSeconds".padLeft(2, "0") : "∞";
 }

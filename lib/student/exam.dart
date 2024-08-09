@@ -7,9 +7,15 @@ import 'package:provider/provider.dart';
 
 class ExamPage extends StatefulWidget {
   final String name;
+  final DateTime firstOpen;
+  final Timestamp? deadline;
+  final int duration;
   const ExamPage({
     super.key,
     required this.name,
+    required this.firstOpen,
+    this.deadline,
+    required this.duration,
   });
 
   @override
@@ -17,6 +23,41 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
+  DateTime? endTime;
+
+  @override
+  void initState() {
+    if (widget.duration == 0 && widget.deadline != null) {
+      endTime = widget.deadline!.toDate();
+    } else if (widget.duration != 0 && widget.deadline == null) {
+      endTime = widget.firstOpen.add(Duration(minutes: widget.duration));
+    } else if (widget.duration != 0 && widget.deadline != null) {
+      endTime = widget.firstOpen.add(Duration(minutes: widget.duration));
+      if (widget.deadline!.toDate().isBefore(endTime!)) {
+        endTime = widget.deadline!.toDate();
+      }
+    }
+    if (endTime != null) {
+      Duration diff = endTime!.difference(DateTime.now());
+      Future.delayed(const Duration(seconds: 1), () {
+        Provider.of<ExamNotifier>(context, listen: false).setEnd(diff);
+      });
+
+      Future.delayed(diff, () {
+        Provider.of<ExamNotifier>(context, listen: false)
+            .sendExam(Dbs.auth.currentUser!.uid, widget.name, true);
+
+        Navigator.of(context).pop();
+      });
+    }
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,11 +104,25 @@ class _ExamPageState extends State<ExamPage> {
                     .setQuestionsCount(questions.length);
 
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     LinearProgressIndicator(
                       color: Clrs.main,
                       backgroundColor: Color.lerp(Colors.white, Clrs.main, 0.2),
                       value: examNot.getPercentageSolved,
+                    ),
+                    QuestionListIndicator(questions: questions),
+                    Container(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 10),
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                          color: Clrs.sec,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(5))),
+                      child: Text(
+                          "${examNot.getEndMinutes}:${examNot.getEndSeconds}",
+                          style: TextStyle(color: Clrs.main)),
                     ),
                     questions[questionIndex].get("type") == "written"
                         ? WrittenAnswerWidget(
@@ -299,26 +354,133 @@ class _CustomCheckWidgetState extends State<CustomCheckWidget> {
   }
 }
 
+class QuestionListIndicator extends StatefulWidget {
+  final List questions;
+  const QuestionListIndicator({super.key, required this.questions});
+
+  @override
+  State<QuestionListIndicator> createState() => _QuestionListIndicatorState();
+}
+
+class _QuestionListIndicatorState extends State<QuestionListIndicator>
+    with TickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation animation;
+
+  @override
+  void initState() {
+    animationController = AnimationController(
+        duration: const Duration(milliseconds: 200), vsync: this);
+    animation = Tween<double>(begin: 0, end: 100).animate(animationController)
+      ..addListener(() => Provider.of<ExamNotifier>(context, listen: false)
+          .setLegendHeight(animation.value));
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+            onTap: () {
+              double height = Provider.of<ExamNotifier>(context, listen: false)
+                  .getLegendHeight;
+              if (height == 0) {
+                animationController.forward();
+              } else if (height == 100) {
+                animationController.reverse();
+              }
+            },
+            child: Container(
+              color: Clrs.sec,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(""),
+                  Text(
+                    "Questions",
+                    style: TextStyle(color: Clrs.main),
+                  ),
+                  Icon(
+                    Icons.arrow_right_sharp,
+                    color: Clrs.main,
+                  ),
+                ],
+              ),
+            )),
+        Consumer<ExamNotifier>(builder: (context, examNot, child) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            width: double.maxFinite,
+            height: examNot.getLegendHeight,
+            child: GridView.builder(
+                itemCount: widget.questions.length,
+                scrollDirection: Axis.vertical,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 40),
+                itemBuilder: (context, i) {
+                  Color backC = Colors.white;
+                  Color textC = Clrs.main;
+                  if (examNot.isAnswered(widget.questions[i].id)) {
+                    backC = Clrs.main;
+                    textC = Clrs.sec;
+                  }
+                  if (i == examNot.getCurrentQuestion) {
+                    backC = Clrs.sec;
+                    textC = Clrs.main;
+                  }
+                  return InkWell(
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    onTap: () {
+                      Provider.of<ExamNotifier>(context, listen: false)
+                          .goToQuestion(i);
+                    },
+                    child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                            color: backC,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(10))),
+                        padding: const EdgeInsets.all(5),
+                        margin: const EdgeInsets.all(1),
+                        alignment: Alignment.center,
+                        child:
+                            Text("${i + 1}", style: TextStyle(color: textC))),
+                  );
+                }),
+          );
+        })
+      ],
+    );
+  }
+}
+
 void showAwesomeDialog(
     BuildContext context, String exam, String uid, String result) {
   AwesomeDialog(
     context: context,
-    dialogType: result == "Done" ? DialogType.success : DialogType.warning,
+    dialogType: result == "Saved" ? DialogType.success : DialogType.warning,
     animType: AnimType.rightSlide,
-    title: 'Result',
+    title: exam,
     desc: result,
     // the ok button either resends the exam when the student doesn't answer all questions, or just dismiss
-    btnOkOnPress: result == "Done"
+    btnOkOnPress: result == "Saved"
         ? () {}
         : () async {
             String result =
                 await Provider.of<ExamNotifier>(context, listen: false)
                     .sendExam(uid, exam, true);
-            if (context.mounted) {
-              showAwesomeDialog(context, exam, uid, result);
+
+            if (context.mounted && result == "Saved") {
+              Navigator.of(context).pop();
             }
           },
     // the cancel button will only show when there're questions unanswered
-    btnCancelOnPress: result == "Done" ? null : () {},
+    btnCancelOnPress: result == "Saved" ? null : () {},
   ).show();
+  if (result == "Saved") {
+    Navigator.of(context).pop();
+  }
 }
