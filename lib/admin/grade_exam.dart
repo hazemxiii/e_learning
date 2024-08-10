@@ -109,7 +109,11 @@ class McqQuestion extends StatelessWidget {
       Wrap(children: [
         ...choices.map((choice) {
           Color backC = Colors.white;
-
+          // choices color legend
+          // correct choice + not selected = main
+          // correct choice + selected = green
+          // not correct + selected = red
+          // not correct + not selected = white
           if (correct.contains(choice)) {
             if (studentAnswers.contains(choice)) {
               backC = Colors.green;
@@ -142,7 +146,9 @@ class WrittenQuestion extends StatefulWidget {
   final String examName;
   final String question;
   final String studentAnswer;
+  // the teacher correction to the question
   final String correction;
+  // if the teacher marked the question as correct or false
   final bool? correct;
   const WrittenQuestion(
       {super.key,
@@ -170,6 +176,7 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
 
   @override
   Widget build(BuildContext context) {
+    // if the question is marked, check if it's right or wrong
     bool isCorrect = false;
     bool isWrong = false;
 
@@ -308,8 +315,6 @@ Future<bool> markQuestion(BuildContext context, String examName, String uid,
   answers[question][uid]["correction"] = correction;
 
   answerDoc.update({"correct": answers}).then((v) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Saved")));
     return true;
   }).catchError((e) {
     ScaffoldMessenger.of(context)

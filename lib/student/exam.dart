@@ -23,6 +23,7 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
+  // the time the exam will auto submit
   DateTime? endTime;
 
   @override
@@ -137,26 +138,34 @@ class _ExamPageState extends State<ExamPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                            color: Clrs.main,
-                            onPressed: () {
-                              Provider.of<ExamNotifier>(context, listen: false)
-                                  .prevQuestion();
-                            },
-                            icon: Icon(
-                              Icons.arrow_back_ios_new_sharp,
-                              color: Clrs.sec,
-                            )),
-                        IconButton(
-                            color: Clrs.main,
-                            onPressed: () {
-                              Provider.of<ExamNotifier>(context, listen: false)
-                                  .nextQuestion();
-                            },
-                            icon: Icon(
-                              Icons.arrow_forward_ios_sharp,
-                              color: Clrs.sec,
-                            ))
+                        Visibility(
+                          visible: examNot.currentQuestion > 0,
+                          child: IconButton(
+                              color: Clrs.main,
+                              onPressed: () {
+                                Provider.of<ExamNotifier>(context,
+                                        listen: false)
+                                    .prevQuestion();
+                              },
+                              icon: Icon(
+                                Icons.arrow_back_ios_new_sharp,
+                                color: Clrs.sec,
+                              )),
+                        ),
+                        Visibility(
+                          visible: examNot.currentQuestion < examNot.count - 1,
+                          child: IconButton(
+                              color: Clrs.main,
+                              onPressed: () {
+                                Provider.of<ExamNotifier>(context,
+                                        listen: false)
+                                    .nextQuestion();
+                              },
+                              icon: Icon(
+                                Icons.arrow_forward_ios_sharp,
+                                color: Clrs.sec,
+                              )),
+                        )
                       ],
                     )
                   ],

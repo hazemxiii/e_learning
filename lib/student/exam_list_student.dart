@@ -37,7 +37,7 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
                   ...exams.map((exam) {
                     return ExamRowWidget(
                       examName: exam.id,
-                      duration: exam.get("duration"),
+                      examDuration: exam.get("duration"),
                       startDate: exam.get("startDate"),
                       deadline: exam.get("deadline"),
                       mark: exam.get("marks")['totalMark'],
@@ -55,14 +55,14 @@ class ExamRowWidget extends StatelessWidget {
   final String examName;
   final Timestamp? startDate;
   final Timestamp? deadline;
-  final int duration;
+  final int examDuration;
   final double mark;
   const ExamRowWidget(
       {super.key,
       required this.examName,
       required this.startDate,
       required this.deadline,
-      required this.duration,
+      required this.examDuration,
       required this.mark});
 
   @override
@@ -71,12 +71,13 @@ class ExamRowWidget extends StatelessWidget {
 
     // contains data about whether the exam is locked or can be opened
     List lockedData = isExamLocked(startDate, deadline);
-    ExamStatus examStatus = lockedData[0];
-    String hintMessage = lockedData[1];
+    ExamStatus examLockedStatus = lockedData[0];
+    String lockedHintMessage = lockedData[1];
 
     return InkWell(
       onTap: () {
-        openExam(context, examStatus, examName, duration, uid, deadline);
+        openExam(
+            context, examLockedStatus, examName, examDuration, uid, deadline);
       },
       child: Column(
         children: [
@@ -92,7 +93,7 @@ class ExamRowWidget extends StatelessWidget {
                   examName,
                   style: TextStyle(color: Clrs.sec),
                 ),
-                examStatus == ExamStatus.waiting
+                examLockedStatus == ExamStatus.waiting
                     ? Icon(Icons.lock, color: Clrs.sec)
                     : FutureBuilder(
                         future: Dbs.firestore
@@ -124,7 +125,7 @@ class ExamRowWidget extends StatelessWidget {
             ),
           ),
           Visibility(
-              visible: hintMessage != "",
+              visible: lockedHintMessage != "",
               child: Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -136,7 +137,7 @@ class ExamRowWidget extends StatelessWidget {
                           bottomLeft: Radius.circular(10),
                           bottomRight: Radius.circular(10))),
                   child: Text(
-                    hintMessage,
+                    lockedHintMessage,
                     style: TextStyle(color: Clrs.main),
                   ))),
           const SizedBox(height: 10)
@@ -168,6 +169,7 @@ List isExamLocked(Timestamp? start, Timestamp? end) {
 
 void openExam(BuildContext context, ExamStatus examStatus, String exam,
     int duration, String uid, Timestamp? deadline) async {
+  // if the exam didn't open yet, just return
   if (examStatus == ExamStatus.waiting) return;
 
   DocumentReference userRef = Dbs.firestore
@@ -179,6 +181,7 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
   var userDoc = await userRef.get();
 
   if (!userDoc.exists) {
+    // if the exam time has already passed, set empty data for the user with null open date to identify from normal user
     if (examStatus == ExamStatus.passed) {
       userRef.set({"firstOpen": null, "answers": {}, "submit": false});
       if (context.mounted) {
@@ -187,6 +190,7 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
       }
       return;
     }
+    // if the exam is still open, make empty answers with now as an open date
     DateTime now = DateTime.now();
     userRef.set({"firstOpen": now, "answers": {}, "submit": false});
     if (context.mounted) {
@@ -203,6 +207,7 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     }
     return;
   }
+  // if the user opened the exam before and they submited, don't open the exam again
   if (userDoc.get("submit")) {
     if (context.mounted) {
       Navigator.of(context).push(MaterialPageRoute(
@@ -211,10 +216,14 @@ void openExam(BuildContext context, ExamStatus examStatus, String exam,
     return;
   }
 
+  // if they exists and open the exam before deadline before
   if (userDoc.get("firstOpen") != null) {
     DateTime now = DateTime.now();
     deadline = deadline ?? Timestamp.fromDate(now);
     DateTime firstOpen = userDoc.get("firstOpen").toDate();
+    // only open if the difference between first time open and now is shorter than the total allowed duration
+    // 0 duration means the exam is open forever
+    // if the now is past deadline do not open
     if ((now.difference(firstOpen).inMinutes < duration || duration == 0) &&
         !now.isAfter(deadline.toDate())) {
       if (context.mounted) {

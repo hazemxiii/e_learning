@@ -16,6 +16,7 @@ class ExamNotifier extends ChangeNotifier {
   }
 
   void setEnd(Duration end) {
+    /// sets the end date of the exam (auto submit)
     this.end = end;
     endMinutes = end.inMinutes;
     endSeconds = end.inSeconds - endMinutes * 60;
@@ -36,6 +37,7 @@ class ExamNotifier extends ChangeNotifier {
   }
 
   void setLegendHeight(double height) {
+    /// the height of the container containing questions numbers
     legendHeight = height;
     notifyListeners();
   }
@@ -138,6 +140,7 @@ class ExamNotifier extends ChangeNotifier {
   }
 
   void delete() {
+    /// when the user exits the page
     currentQuestion = 0;
     answers = {};
     end = null;

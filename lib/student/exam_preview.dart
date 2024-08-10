@@ -39,26 +39,27 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
               List questions = snap.data!['questions'];
               Map correctAnswers = snap.data!["correct"];
               Map studentAnswers = snap.data!["student"];
-              bool graded = snap.data!['graded'];
+              bool examIsGraded = snap.data!['graded'];
               double grade = snap.data!['grade'];
-              double total = snap.data!['total'];
+              double totalGrade = snap.data!['total'];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Visibility(
-                      visible: graded,
+                      visible: examIsGraded,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
-                            color:
-                                grade / total > .5 ? Colors.green : Colors.red,
+                            color: grade / totalGrade > .5
+                                ? Colors.green
+                                : Colors.red,
                             borderRadius:
                                 const BorderRadius.all(Radius.circular(5))),
                         child: Text(
                           style: const TextStyle(color: Colors.white),
-                          "$grade/$total",
+                          "$grade/$totalGrade",
                         ),
                       )),
                   ...questions.map((question) {
@@ -80,7 +81,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                         examName: widget.examName,
                         question: question.id,
                         studentAnswer: studentAnswers[question.id] ?? "",
-                        correct: graded ? answerData['correct'] : null,
+                        correct: examIsGraded ? answerData['correct'] : null,
                         correction: answerData['correction'] ?? "",
                       );
                     }
@@ -264,6 +265,7 @@ Future<Map> getExamAnswers(String examName, String uid) async {
   double totalMark = 0;
   double grade = 0;
 
+// if there is no grade (exam is not graded yet) do not give the correct answer, it will raise an error before getting it
   try {
     grade = studentAnswerDoc.get("grade");
     correctAnswers =
