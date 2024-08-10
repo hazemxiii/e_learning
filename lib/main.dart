@@ -56,6 +56,8 @@ class _SignInState extends State<SignIn> {
   late bool hidePass;
   // to check if there's an error in login
   bool isError = false;
+  // when the user clicks the login, used to show animation instead of login button
+  bool loading = false;
 
   @override
   void initState() {
@@ -138,6 +140,9 @@ class _SignInState extends State<SignIn> {
                 children: [
                   InkWell(
                     onTap: () async {
+                      setState(() {
+                        loading = true;
+                      });
                       try {
                         UserCredential credentials = await Dbs.auth
                             .signInWithEmailAndPassword(
@@ -161,32 +166,37 @@ class _SignInState extends State<SignIn> {
                         }
                       } on FirebaseAuthException {
                         setState(() {
+                          loading = false;
                           isError = true;
                         });
                       }
                     },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(999)),
-                        color: Clrs.main,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 50),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.login,
-                            color: Clrs.sec,
+                    child: loading
+                        ? CircularProgressIndicator(
+                            color: Clrs.main,
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(999)),
+                              color: Clrs.main,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 50),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.login,
+                                  color: Clrs.sec,
+                                ),
+                                const SizedBox(
+                                  width: 3,
+                                ),
+                                Text("Login", style: TextStyle(color: Clrs.sec))
+                              ],
+                            ),
                           ),
-                          const SizedBox(
-                            width: 3,
-                          ),
-                          Text("Login", style: TextStyle(color: Clrs.sec))
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               )
