@@ -1,9 +1,11 @@
 import 'package:e_learning/admin/dashboard.dart';
+import 'package:e_learning/admin/users.dart';
 import 'package:e_learning/main.dart';
 import 'package:flutter/material.dart';
 import "../global.dart";
 
 int activePage = 0;
+bool sideBarShown = true;
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -17,9 +19,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
   @override
   void initState() {
     activePage = 0;
+    sideBarShown = true;
     pages = [
-      const Dashboard(),
-      const Placeholder(),
+      const DashboardPage(),
+      const UsersPage(),
       const Placeholder(),
       const Placeholder()
     ];
@@ -28,15 +31,34 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // sideBarShown = MediaQuery.of(context).size.width >= 700;
     return Scaffold(
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.miniStartDocked,
       backgroundColor: Colors.white,
+      floatingActionButton: Visibility(
+        visible: !sideBarShown,
+        child: IconButton(
+          icon: Icon(
+            Icons.arrow_right,
+            color: Clrs.main,
+          ),
+          onPressed: () {
+            setState(() {
+              sideBarShown = true;
+            });
+          },
+        ),
+      ),
       body: SafeArea(
         child: Stack(
           children: [
             pages[activePage],
-            SideBar(onTap: () {
-              setState(() {});
-            })
+            SideBar(
+                sideBarShown: sideBarShown,
+                onTap: () {
+                  setState(() {});
+                })
           ],
         ),
       ),
@@ -46,7 +68,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
 class SideBar extends StatefulWidget {
   final Function onTap;
-  const SideBar({super.key, required this.onTap});
+  final bool sideBarShown;
+  const SideBar({super.key, required this.onTap, required this.sideBarShown});
 
   @override
   State<SideBar> createState() => _SideBarState();
@@ -89,67 +112,81 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
       {"icon": Icons.assignment, "text": "HomeWork"}
     ];
     return Positioned(
-        child: Container(
-      decoration: BoxDecoration(
-          color: Color.lerp(Clrs.main, Colors.white, .8),
-          borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(20), bottomRight: Radius.circular(20))),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      width: sidebarAnimation.value,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            children: [
-              ...pagesButtons.indexed.map((e) {
-                int i = e.$1;
-                Map data = e.$2;
-                return SideBarItem(
+        child: Visibility(
+      visible: widget.sideBarShown,
+      child: Container(
+        decoration: BoxDecoration(
+            color: Color.lerp(Clrs.main, Colors.white, .8),
+            borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20))),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        width: sidebarAnimation.value,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              children: [
+                ...pagesButtons.indexed.map((e) {
+                  int i = e.$1;
+                  Map data = e.$2;
+                  return SideBarItem(
+                      textShown: textShown,
+                      itemWidth: sidebarAnimation.value,
+                      icon: data["icon"],
+                      text: data["text"],
+                      onTap: () {
+                        activePage = i;
+                        widget.onTap();
+                      },
+                      isActive: activePage == i);
+                }),
+              ],
+            ),
+            Column(
+              children: [
+                SideBarItem(
+                    isActive: true,
+                    icon: Icons.logout,
                     textShown: textShown,
                     itemWidth: sidebarAnimation.value,
-                    icon: data["icon"],
-                    text: data["text"],
+                    text: "Log out",
                     onTap: () {
-                      activePage = i;
+                      Dbs.auth.signOut();
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (context) => const SignIn()));
+                    }),
+                SideBarItem(
+                    isActive: true,
+                    textShown: textShown,
+                    itemWidth: sidebarAnimation.value,
+                    icon: textShown ? Icons.fullscreen_exit : Icons.fullscreen,
+                    text: "Minimise",
+                    onTap: () {
+                      if (!expanded) {
+                        sidebarAnimationCont.forward();
+                        Future.delayed(animationDuration, () {
+                          expanded = !expanded;
+                        });
+                      } else {
+                        expanded = !expanded;
+                        sidebarAnimationCont.reverse();
+                      }
+                    }),
+                SideBarItem(
+                    textShown: textShown,
+                    itemWidth: sidebarAnimation.value,
+                    icon: Icons.arrow_left,
+                    text: "Hide sidebar",
+                    onTap: () {
+                      sideBarShown = false;
                       widget.onTap();
                     },
-                    isActive: activePage == i);
-              }),
-            ],
-          ),
-          Column(
-            children: [
-              SideBarItem(
-                  isActive: true,
-                  icon: Icons.logout,
-                  textShown: textShown,
-                  itemWidth: sidebarAnimation.value,
-                  text: "Log out",
-                  onTap: () {
-                    Dbs.auth.signOut();
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => const SignIn()));
-                  }),
-              SideBarItem(
-                  isActive: true,
-                  textShown: textShown,
-                  itemWidth: sidebarAnimation.value,
-                  icon: Icons.arrow_right,
-                  text: "Minimise",
-                  onTap: () {
-                    if (!expanded) {
-                      sidebarAnimationCont.forward();
-                      Future.delayed(animationDuration, () {
-                        expanded = !expanded;
-                      });
-                    } else {
-                      expanded = !expanded;
-                      sidebarAnimationCont.reverse();
-                    }
-                  }),
-            ],
-          )
-        ],
+                    isActive: true)
+              ],
+            )
+          ],
+        ),
       ),
     ));
   }
