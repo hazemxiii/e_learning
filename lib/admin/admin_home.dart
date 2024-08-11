@@ -1,8 +1,9 @@
-import 'package:e_learning/admin/add_exam.dart';
-import 'package:e_learning/admin/exam_list_admin.dart';
+import 'package:e_learning/admin/dashboard.dart';
 import 'package:e_learning/main.dart';
 import 'package:flutter/material.dart';
 import "../global.dart";
+
+int activePage = 0;
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -12,6 +13,19 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
+  late List pages;
+  @override
+  void initState() {
+    activePage = 0;
+    pages = [
+      const Dashboard(),
+      const Placeholder(),
+      const Placeholder(),
+      const Placeholder()
+    ];
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,47 +33,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              alignment: Alignment.center,
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                        color: Clrs.main,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(10))),
-                    width: MediaQuery.of(context).size.width / 6 * 5,
-                    padding: const EdgeInsets.symmetric(vertical: 50),
-                    child: Column(
-                      children: [
-                        TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AdminExamListPage()));
-                            },
-                            child: Text(
-                              "Exams List",
-                              style: TextStyle(color: Clrs.sec, fontSize: 20),
-                            )),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const AddExamPage()));
-                          },
-                          icon: Icon(
-                            Icons.add,
-                            color: Clrs.sec,
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-            const SideBar()
+            pages[activePage],
+            SideBar(onTap: () {
+              setState(() {});
+            })
           ],
         ),
       ),
@@ -68,7 +45,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
 }
 
 class SideBar extends StatefulWidget {
-  const SideBar({super.key});
+  final Function onTap;
+  const SideBar({super.key, required this.onTap});
 
   @override
   State<SideBar> createState() => _SideBarState();
@@ -80,6 +58,8 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
   Duration animationDuration = const Duration(milliseconds: 150);
   bool expanded = false;
   bool textShown = false;
+
+  List<Map> pagesButtons = [];
 
   @override
   void initState() {
@@ -96,44 +76,67 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
               }
             });
           });
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    pagesButtons = [
+      {"icon": Icons.home, "text": "Home"},
+      {"icon": Icons.person, "text": "Users"},
+      {"icon": Icons.video_collection, "text": "Videos"},
+      {"icon": Icons.assignment, "text": "HomeWork"}
+    ];
     return Positioned(
         child: Container(
+      decoration: BoxDecoration(
+          color: Color.lerp(Clrs.main, Colors.white, .8),
+          borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(20), bottomRight: Radius.circular(20))),
       padding: const EdgeInsets.symmetric(vertical: 10),
       width: sidebarAnimation.value,
-      color: Color.lerp(Clrs.main, Colors.white, .8),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             children: [
-              SideBarItem(
-                onTap: () {},
-                icon: Icons.home,
-                text: "Home",
-                textShown: textShown,
-                itemWidth: sidebarAnimation.value,
-              ),
+              ...pagesButtons.indexed.map((e) {
+                int i = e.$1;
+                Map data = e.$2;
+                return SideBarItem(
+                    textShown: textShown,
+                    itemWidth: sidebarAnimation.value,
+                    icon: data["icon"],
+                    text: data["text"],
+                    onTap: () {
+                      activePage = i;
+                      widget.onTap();
+                    },
+                    isActive: activePage == i);
+              }),
             ],
           ),
           Column(
             children: [
-              IconButton(
-                  onPressed: () {
+              SideBarItem(
+                  isActive: true,
+                  icon: Icons.logout,
+                  textShown: textShown,
+                  itemWidth: sidebarAnimation.value,
+                  text: "Log out",
+                  onTap: () {
                     Dbs.auth.signOut();
                     Navigator.of(context).pushReplacement(MaterialPageRoute(
                         builder: (context) => const SignIn()));
-                  },
-                  icon: Icon(
-                    Icons.logout,
-                    color: Clrs.main,
-                  )),
-              IconButton(
-                  onPressed: () {
+                  }),
+              SideBarItem(
+                  isActive: true,
+                  textShown: textShown,
+                  itemWidth: sidebarAnimation.value,
+                  icon: Icons.arrow_right,
+                  text: "Minimise",
+                  onTap: () {
                     if (!expanded) {
                       sidebarAnimationCont.forward();
                       Future.delayed(animationDuration, () {
@@ -143,11 +146,7 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
                       expanded = !expanded;
                       sidebarAnimationCont.reverse();
                     }
-                  },
-                  icon: Icon(
-                    expanded ? Icons.arrow_left : Icons.arrow_right,
-                    color: Clrs.main,
-                  ))
+                  }),
             ],
           )
         ],
@@ -162,13 +161,15 @@ class SideBarItem extends StatefulWidget {
   final IconData icon;
   final String text;
   final Function onTap;
+  final bool isActive;
   const SideBarItem(
       {super.key,
       required this.textShown,
       required this.itemWidth,
       required this.icon,
       required this.text,
-      required this.onTap});
+      required this.onTap,
+      required this.isActive});
 
   @override
   State<SideBarItem> createState() => _SideBarItemState();
@@ -177,6 +178,8 @@ class SideBarItem extends StatefulWidget {
 class _SideBarItemState extends State<SideBarItem> {
   @override
   Widget build(BuildContext context) {
+    Color? c =
+        widget.isActive ? Clrs.main : Color.lerp(Clrs.sec, Colors.pink, 0.2);
     return SizedBox(
       width: widget.itemWidth - 10,
       child: IconButton(
@@ -188,13 +191,16 @@ class _SideBarItemState extends State<SideBarItem> {
           children: [
             Icon(
               widget.icon,
-              color: Clrs.main,
+              color: c,
+            ),
+            SizedBox(
+              width: widget.itemWidth <= 80 ? 0 : 10,
             ),
             Visibility(
                 visible: widget.textShown,
                 child: Text(
                   widget.text,
-                  style: TextStyle(color: Clrs.main),
+                  style: TextStyle(color: c),
                 ))
           ],
         ),
