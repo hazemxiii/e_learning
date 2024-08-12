@@ -137,6 +137,9 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
                       text: data["text"],
                       onTap: () {
                         activePage = i;
+                        if (activePage == 1) {
+                          sideBarShown = false;
+                        }
                         widget.onTap();
                       },
                       isActive: activePage == i);

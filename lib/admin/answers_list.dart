@@ -166,7 +166,7 @@ class StudentAnswerRow extends StatelessWidget {
 }
 
 Future<Map> getExamResponses(String examName, bool withGrades) async {
-  List responses = [];
+  List<QueryDocumentSnapshot> responses = [];
   Map studentNames = {};
 
   if (!withGrades) {
@@ -187,7 +187,14 @@ Future<Map> getExamResponses(String examName, bool withGrades) async {
         .docs;
   }
 
-  studentNames = (await Dbs.firestore.doc("/users/public").get()).get("names");
+  for (int i = 0; i < responses.length; i++) {
+    DocumentSnapshot student =
+        await Dbs.firestore.doc("/users/${responses[i].id}").get();
+    studentNames[responses[i].id] = [
+      student.get("fName"),
+      student.get("lName")
+    ];
+  }
 
   return {"names": studentNames, "responses": responses};
 }

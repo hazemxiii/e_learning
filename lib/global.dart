@@ -10,6 +10,8 @@ enum DateType { startDate, deadline }
 
 enum ExamStatus { passed, waiting, open }
 
+enum RowType { header, normal }
+
 class Dbs {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   static FirebaseAuth auth = FirebaseAuth.instance;
