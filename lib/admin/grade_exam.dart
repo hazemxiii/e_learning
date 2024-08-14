@@ -221,11 +221,11 @@ class _WrittenQuestionState extends State<WrittenQuestion> {
           style: TextStyle(color: Clrs.main),
           cursorColor: Clrs.main,
           decoration: CustomDecoration.giveInputDecoration(
-              textC: Clrs.main,
-              hint: "Correct the question",
-              BorderType.under,
-              Clrs.sec,
-              false),
+            textC: Clrs.main,
+            hint: "Correct the question",
+            BorderType.under,
+            Clrs.sec,
+          ),
         ),
         const SizedBox(height: 5),
         Row(

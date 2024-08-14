@@ -74,10 +74,10 @@ class _AddExamPageState extends State<AddExamPage> {
                       style: TextStyle(color: Clrs.main),
                       cursorColor: Clrs.main,
                       decoration: CustomDecoration.giveInputDecoration(
-                          label: "Exam Name",
-                          BorderType.under,
-                          Clrs.main,
-                          false),
+                        label: "Exam Name",
+                        BorderType.under,
+                        Clrs.main,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -235,7 +235,7 @@ class _WrittenQuestionWidgetState extends State<WrittenQuestionWidget> {
                         ],
                         textAlign: TextAlign.center,
                         decoration: CustomDecoration.giveInputDecoration(
-                            BorderType.under, Clrs.main, false,
+                            BorderType.under, Clrs.main,
                             label: "Mark"),
                       )),
                   IconButton(
@@ -326,7 +326,7 @@ class _McqQuestionWidgetState extends State<McqQuestionWidget> {
                         ],
                         textAlign: TextAlign.center,
                         decoration: CustomDecoration.giveInputDecoration(
-                            BorderType.under, Clrs.sec, false,
+                            BorderType.under, Clrs.sec,
                             label: "Mark"),
                       )),
                   IconButton(
@@ -644,7 +644,7 @@ class _DurationPickerState extends State<DurationPicker> {
                 controller: durationCont,
                 style: TextStyle(color: Clrs.main),
                 decoration: CustomDecoration.giveInputDecoration(
-                    BorderType.under, Clrs.sec, false,
+                    BorderType.under, Clrs.sec,
                     focusWidth: 1),
                 textAlign: TextAlign.center,
               )),

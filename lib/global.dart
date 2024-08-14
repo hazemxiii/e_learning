@@ -19,13 +19,25 @@ class Dbs {
 
 class Clrs {
   static Color main = const Color.fromRGBO(128, 147, 241, 1);
-  static Color sec = const Color.fromRGBO(255, 202, 212, 1);
+  // static Color sec = const Color.fromRGBO(255, 202, 212, 1);
+  static Color sec = const Color.fromRGBO(0, 20, 39, 1);
+}
+
+class StudentLevels {
+  static Map levels = {
+    1: "1st prep",
+    2: "2nd prep",
+    3: "3rd prep",
+    4: "1st sec",
+    5: "2nd sec",
+    6: "3rd sec"
+  };
 }
 
 class CustomDecoration {
-  static dynamic giveInputDecoration(
-      BorderType type, Color color, bool justBorders,
+  static dynamic giveInputDecoration(BorderType type, Color color,
       {double width = 1,
+      bool justBorders = false,
       Color fill = Colors.transparent,
       double radius = 0,
       String label = "",

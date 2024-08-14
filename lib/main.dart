@@ -77,8 +77,8 @@ class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) {
     List borders = CustomDecoration.giveInputDecoration(
-        BorderType.under, Clrs.main, true,
-        error: isError);
+        BorderType.under, Clrs.main,
+        justBorders: true, error: isError);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -103,7 +103,6 @@ class _SignInState extends State<SignIn> {
                     label: "UserName",
                     BorderType.under,
                     Clrs.main,
-                    false,
                     textC: Clrs.sec,
                     error: isError),
               ),
