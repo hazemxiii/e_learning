@@ -4,8 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_learning/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+// to apply an option for multiple users
 List selectedUsers = [];
+// to check if there's only student selected, admins, or both
 int selectedStudentNum = 0;
 
 class UsersPage extends StatefulWidget {
@@ -51,6 +54,7 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
                     ),
                   );
                 }
+                // rows of the table aren't all the same color
                 bool isBlue = true;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -144,7 +148,7 @@ class UserRow extends StatefulWidget {
 }
 
 class _UserRowState extends State<UserRow> {
-  bool selected = false;
+  bool isSelected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +158,9 @@ class _UserRowState extends State<UserRow> {
       c = Clrs.main;
       textC = Colors.white;
     } else {
-      selected = selectedUsers.contains(widget.id);
+      isSelected = selectedUsers.contains(widget.id);
     }
-    if (selected) {
+    if (isSelected) {
       c = Clrs.sec;
     }
     return InkWell(
@@ -170,16 +174,18 @@ class _UserRowState extends State<UserRow> {
       onTap: widget.isHeader
           ? null
           : () {
-              setState(() {
-                if (selected || selectedUsers.isNotEmpty) {
+              // single press will only work if the user is selected or multi selection is active
+              if (isSelected || selectedUsers.isNotEmpty) {
+                setState(() {
                   toggleSelectUser(widget.id!, widget.cells[1]);
-                }
-              });
+                });
+              }
             },
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           ...widget.cells.map((cell) {
+            // if it's the first cell on the left or the last on the right to give them border radius
             bool isLeftMost = cell == widget.cells.first;
             bool isRightMost = cell == widget.cells.last;
             return Container(
@@ -248,26 +254,26 @@ class _OptionsRowState extends State<OptionsRow> {
                   style: TextStyle(color: Clrs.main),
                 )
               ])),
-          IconButton(
-              color: Colors.red,
-              onPressed: () {
-                if (selectedUsers.isEmpty) {
-                  return;
-                }
-                // TODO:delete users
-              },
-              icon: const Wrap(children: [
-                Icon(Icons.delete_outline),
-                Text(
-                  "Delete",
-                  style: TextStyle(color: Colors.red),
-                )
-              ])),
+          // IconButton(
+          //     color: Colors.red,
+          //     onPressed: () {
+          //       if (selectedUsers.isNotEmpty) {
+          //         deleteUsers(context);
+          //       }
+          //     },
+          //     icon: const Wrap(children: [
+          //       Icon(Icons.delete_outline),
+          //       Text(
+          //         "Delete",
+          //         style: TextStyle(color: Colors.red),
+          //       )
+          //     ])),
           IconButton(
               color: Clrs.main,
               onPressed: () {
-                if (selectedStudentNum != 0) {
-                  // TODO:level up
+                if (selectedStudentNum == selectedUsers.length &&
+                    selectedUsers.isNotEmpty) {
+                  changeStudentLevel(true);
                 }
               },
               icon: Wrap(children: [
@@ -280,8 +286,9 @@ class _OptionsRowState extends State<OptionsRow> {
           IconButton(
               color: Clrs.main,
               onPressed: () {
-                if (selectedStudentNum != 0) {
-                  // TODO:level up
+                if (selectedStudentNum == selectedUsers.length &&
+                    selectedUsers.isNotEmpty) {
+                  changeStudentLevel(false);
                 }
               },
               icon: Wrap(children: [
@@ -349,9 +356,23 @@ class _AddUserDrawerState extends State<AddUserDrawer> {
             children: [
               IconButton(
                   color: Clrs.main,
-                  onPressed: () {
-                    createUser(context, emailCont.text, fNameCont.text,
-                        lNameCont.text, role, level, widget.passwordCont.text);
+                  onPressed: () async {
+                    bool created = await createUser(
+                        context,
+                        emailCont.text,
+                        fNameCont.text,
+                        lNameCont.text,
+                        role,
+                        level,
+                        widget.passwordCont.text);
+                    if (created) {
+                      emailCont.text = "";
+                      fNameCont.text = "";
+                      lNameCont.text = "";
+                      role = "student";
+                      level = 1;
+                      widget.animationController.reverse();
+                    }
                   },
                   icon: Row(
                     children: [
@@ -495,7 +516,9 @@ void toggleSelectUser(String id, String role) {
 
 Future<bool> createUser(BuildContext context, String email, String fName,
     String lName, String role, int level, String oldPassword) async {
+  // the email of the admin that create the user
   String oldEmail = Dbs.auth.currentUser!.email!;
+  // sign in to check the password the user provided is correct
   try {
     await Dbs.auth
         .signInWithEmailAndPassword(email: oldEmail, password: oldPassword);
@@ -512,8 +535,10 @@ Future<bool> createUser(BuildContext context, String email, String fName,
     }
     return false;
   }
+  // the random password for the user
   String password = "";
   String domain = "@elearning.com";
+  // chars we don't want to show up in the random password that lies between the ascii range we want
   List invalidChars = [
     "'",
     "(",
@@ -534,6 +559,7 @@ Future<bool> createUser(BuildContext context, String email, String fName,
       password += ascii;
     }
   }
+  // create the user
   UserCredential? credentials;
   try {
     credentials = await Dbs.auth.createUserWithEmailAndPassword(
@@ -561,13 +587,16 @@ Future<bool> createUser(BuildContext context, String email, String fName,
 
     batch.commit().then((v) {}).catchError((e) => e);
 
+    // sign in again in the old account
     try {
       await Dbs.auth
           .signInWithEmailAndPassword(email: oldEmail, password: oldPassword);
     } on FirebaseAuthException {
-      return false;
+      //
     }
-
+    if (context.mounted) {
+      showCopyPassword(context, password);
+    }
     return true;
   }
   return false;
@@ -583,4 +612,91 @@ void showAwesomeDialog(BuildContext context, String desc) {
           descTextStyle: TextStyle(color: Clrs.sec),
           dialogType: DialogType.error)
       .show();
+}
+
+void showCopyPassword(BuildContext context, String password) {
+  showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          backgroundColor: Clrs.sec,
+          content: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            direction: Axis.vertical,
+            children: [
+              Text(
+                "User created with password:",
+                style: TextStyle(color: Clrs.main),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                    color: Clrs.main,
+                    borderRadius: const BorderRadius.all(Radius.circular(10))),
+                child: IconButton(
+                  color: Clrs.sec,
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: password));
+                    Navigator.of(context).pop();
+                  },
+                  icon: Wrap(
+                    children: [
+                      Text(
+                        password,
+                        style: TextStyle(color: Clrs.sec),
+                      ),
+                      const Icon(Icons.copy)
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      });
+}
+
+void deleteUsers(BuildContext context) {
+  showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+            content:
+                Text("You're about to delete ${selectedUsers.length} users"),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(color: Clrs.main),
+                  )),
+              TextButton(
+                  onPressed: () async {
+                    for (int i = 0; i < selectedUsers.length; i++) {
+                      // String uid = selectedUsers[i];
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red),
+                  ))
+            ],
+          ));
+}
+
+void changeStudentLevel(bool isUp) async {
+  var batch = Dbs.firestore.batch();
+  for (int i = 0; i < selectedUsers.length; i++) {
+    String uid = selectedUsers[i];
+    DocumentReference studentDocRef = Dbs.firestore.doc("users/$uid");
+    DocumentSnapshot studentDoc = await studentDocRef.get();
+    int oldLevel = studentDoc.get("level");
+    if (isUp && oldLevel < 6) {
+      batch.update(studentDocRef, {"level": oldLevel + 1});
+    } else if (!isUp && oldLevel > 1) {
+      batch.update(studentDocRef, {"level": oldLevel - 1});
+    }
+  }
+  batch.commit().then((v) {}).catchError((e) => e);
 }
