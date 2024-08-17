@@ -31,7 +31,9 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
                       ),
                     ));
               }
-              List exams = snap.data!.docs;
+              List exams=
+                snap.data!.docs;
+              
               return Column(
                 children: [
                   ...exams.map((exam) {

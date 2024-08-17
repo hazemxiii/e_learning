@@ -585,15 +585,17 @@ Future<bool> createUser(BuildContext context, String email, String fName,
       batch.update(userDoc, {"level": level});
     }
 
-    batch.commit().then((v) {}).catchError((e) => e);
-
-    // sign in again in the old account
     try {
       await Dbs.auth
           .signInWithEmailAndPassword(email: oldEmail, password: oldPassword);
     } on FirebaseAuthException {
       //
     }
+    batch.commit().then((v) {}).catchError((e) {
+      // print(e);
+    });
+
+    // sign in again in the old account
     if (context.mounted) {
       showCopyPassword(context, password);
     }

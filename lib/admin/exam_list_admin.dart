@@ -188,6 +188,8 @@ void gradeExam(String examName) async {
         .doc("/exams/$examName/studentAnswers/${studentsAnswers[i].id}");
     batch.update(student, {"grade": grade});
   }
+  DocumentReference examRef = Dbs.firestore.doc("exams/$examName");
+  batch.update(examRef, {"marked": true});
   batch.commit().then((_) {}).catchError((e) => e);
 }
 

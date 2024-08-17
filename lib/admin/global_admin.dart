@@ -124,6 +124,7 @@ class AddExamNotifier extends ChangeNotifier {
       "duration": examDuration,
       "startDate": startDate,
       "deadline": deadline,
+      "marked": false
     });
     Map correctAnswers = {};
     Map marks = {"totalMark": 0};

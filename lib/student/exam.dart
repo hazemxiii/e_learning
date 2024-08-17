@@ -73,6 +73,9 @@ class _ExamPageState extends State<ExamPage> {
                         .sendExam(uid, widget.name, false);
                 if (context.mounted) {
                   showAwesomeDialog(context, widget.name, uid, result);
+                  if (result == "Saved") {
+                    Navigator.of(context).pop();
+                  }
                 }
               },
               icon: const Icon(Icons.send))
