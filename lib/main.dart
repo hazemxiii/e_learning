@@ -61,8 +61,8 @@ class _SignInState extends State<SignIn> {
 
   @override
   void initState() {
-    userNameCont = TextEditingController(text: "e43304113@gmail.com");
-    passCont = TextEditingController(text: "123456");
+    userNameCont = TextEditingController();
+    passCont = TextEditingController();
     hidePass = true;
     super.initState();
   }
@@ -103,7 +103,7 @@ class _SignInState extends State<SignIn> {
                     label: "UserName",
                     BorderType.under,
                     Clrs.main,
-                    textC: Clrs.sec,
+                    textC: Clrs.main,
                     error: isError),
               ),
               const SizedBox(height: 5),

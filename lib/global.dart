@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 enum BorderType { out, under }
@@ -12,9 +13,12 @@ enum ExamStatus { passed, waiting, open }
 
 enum RowType { header, normal }
 
+enum FileExt { img, dir, vid, file, loading }
+
 class Dbs {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   static FirebaseAuth auth = FirebaseAuth.instance;
+  static Reference storage = FirebaseStorage.instance.ref();
 }
 
 class Clrs {
@@ -25,6 +29,7 @@ class Clrs {
 
 class StudentLevels {
   static Map levels = {
+    0: "All",
     1: "1st prep",
     2: "2nd prep",
     3: "3rd prep",
@@ -88,4 +93,13 @@ class CustomDecoration {
         enabledBorder: enabledBorder,
         focusedBorder: focusBorder);
   }
+}
+
+class FileIcon {
+  static Map<FileExt, IconData> icons = {
+    FileExt.dir: Icons.folder,
+    FileExt.file: Icons.insert_drive_file,
+    FileExt.img: Icons.image,
+    FileExt.vid: Icons.video_file
+  };
 }

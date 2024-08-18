@@ -1,4 +1,5 @@
 import 'package:e_learning/admin/dashboard.dart';
+import 'package:e_learning/admin/files_list.dart';
 import 'package:e_learning/admin/users.dart';
 import 'package:e_learning/main.dart';
 import 'package:flutter/material.dart';
@@ -19,11 +20,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
   @override
   void initState() {
     activePage = 0;
-    sideBarShown = true;
     pages = [
       const DashboardPage(),
       const UsersPage(),
-      const Placeholder(),
+      const FilesListPage(),
       const Placeholder()
     ];
     super.initState();
@@ -137,9 +137,7 @@ class _SideBarState extends State<SideBar> with TickerProviderStateMixin {
                       text: data["text"],
                       onTap: () {
                         activePage = i;
-                        if (activePage == 1) {
-                          sideBarShown = false;
-                        }
+                        sideBarShown = false;
                         widget.onTap();
                       },
                       isActive: activePage == i);
