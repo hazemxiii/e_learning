@@ -95,7 +95,7 @@ class CustomDecoration {
   }
 }
 
-class FileIcon {
+class FileData {
   static Map<FileExt, IconData> icons = {
     FileExt.dir: Icons.folder,
     FileExt.file: Icons.insert_drive_file,
