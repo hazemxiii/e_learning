@@ -48,7 +48,8 @@ class _AnswersListPageState extends State<AnswersListPage> {
             child: FutureBuilder(
               future: getExamResponses(widget.examName, gradesShown),
               builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
+                if (snap.connectionState != ConnectionState.done ||
+                    !snap.hasData) {
                   return SizedBox(
                       height: MediaQuery.of(context).size.height,
                       child: Center(
@@ -57,6 +58,7 @@ class _AnswersListPageState extends State<AnswersListPage> {
                         ),
                       ));
                 }
+                // TODO: fix the null here
                 List studentsAnswers = snap.data!['responses'];
                 Map studentNames = snap.data!['names'];
                 return Column(
@@ -186,7 +188,6 @@ Future<Map> getExamResponses(String examName, bool withGrades) async {
             .get())
         .docs;
   }
-
   for (int i = 0; i < responses.length; i++) {
     DocumentSnapshot student =
         await Dbs.firestore.doc("/users/${responses[i].id}").get();
