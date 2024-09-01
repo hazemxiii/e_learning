@@ -132,3 +132,5 @@ class FileHandler {
     }
   }
 }
+
+//TODO:make download files more flexible on web
