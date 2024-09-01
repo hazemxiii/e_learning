@@ -167,18 +167,18 @@ class _FilesContainerState extends State<FilesContainer> {
                     }
                   : () {
                       setState(() {
-                        toggleSelectFile(widget.files[i].fullPath);
+                        toggleSelectFile(widget.files[index].fullPath);
                       });
                     },
               onLongPress: () {
-                if (!selectedFiles.contains(widget.files[i].fullPath)) {
+                if (!selectedFiles.contains(widget.files[index].fullPath)) {
                   setState(() {
-                    toggleSelectFile(widget.files[i].fullPath);
+                    toggleSelectFile(widget.files[index].fullPath);
                   });
                 }
               },
               child: FileWidget(
-                  filePath: widget.files[i].fullPath,
+                  filePath: widget.files[index].fullPath,
                   fileType: fileType,
                   fileName: widget.files[index].name,
                   isGrid: widget.isGrid));
@@ -254,7 +254,8 @@ class FileWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 5),
       decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10), topRight: Radius.circular(10)),
           color: selectedFiles.contains(filePath)
               ? Color.lerp(Colors.white, Clrs.sec, .3)
               : Colors.white,

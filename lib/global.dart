@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import "package:url_launcher/url_launcher.dart";
+// import 'package:dio/dio.dart';
 
 enum BorderType { out, under }
 
@@ -102,4 +105,30 @@ class FileData {
     FileExt.img: Icons.image,
     FileExt.vid: Icons.video_file
   };
+}
+
+class FileHandler {
+  static FileExt getFileType(String fileName) {
+    if (!fileName.contains(".")) {
+      return FileExt.dir;
+    }
+    String ex = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+    if (["jpg", "png", "jpeg"].contains(ex)) {
+      return FileExt.img;
+    }
+    if (['mp4', "m4a"].contains(ex)) {
+      return FileExt.vid;
+    }
+    return FileExt.file;
+  }
+
+  static void openImage(BuildContext context, String filePath) async {
+    try {
+      if (Platform.isAndroid) {}
+    } catch (e) {
+      String url = await Dbs.storage.child(filePath).getDownloadURL();
+      Uri uri = Uri.parse(url);
+      await launchUrl(uri);
+    }
+  }
 }
