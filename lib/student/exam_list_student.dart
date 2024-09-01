@@ -31,9 +31,7 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
                       ),
                     ));
               }
-              List exams=
-                snap.data!.docs;
-              
+              List exams = snap.data!.docs;
               return Column(
                 children: [
                   ...exams.map((exam) {
@@ -42,7 +40,7 @@ class _StudentExamListPageState extends State<StudentExamListPage> {
                       examDuration: exam.get("duration"),
                       startDate: exam.get("startDate"),
                       deadline: exam.get("deadline"),
-                      mark: exam.get("marks")['totalMark'],
+                      mark: exam.get("marks")['totalMark'].toDouble(),
                     );
                   })
                 ],
