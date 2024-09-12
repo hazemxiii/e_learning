@@ -295,20 +295,11 @@ class FileContextMenu extends StatelessWidget {
 }
 
 void openFile(BuildContext context, FileExt fileType, String filePath) async {
-  switch (fileType) {
-    case FileExt.img:
-      FileHandler.openImage(context, filePath);
-      break;
-    case FileExt.dir:
-      path = filePath;
-      pathChanged!();
-      break;
-    case FileExt.vid:
-      break;
-    case FileExt.file:
-      break;
-    case FileExt.loading:
-      break;
+  if (fileType == FileExt.dir) {
+    path = filePath;
+    pathChanged!();
+  } else if (fileType != FileExt.loading) {
+    FileHandler.downloadFile(context, filePath);
   }
 }
 

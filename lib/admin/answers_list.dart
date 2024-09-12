@@ -58,7 +58,6 @@ class _AnswersListPageState extends State<AnswersListPage> {
                         ),
                       ));
                 }
-                // TODO: fix the null here
                 List studentsAnswers = snap.data!['responses'];
                 Map studentNames = snap.data!['names'];
                 return Column(

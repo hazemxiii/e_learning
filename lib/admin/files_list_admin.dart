@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -439,19 +440,11 @@ FileExt getFileType(String fileName) {
 }
 
 void openFile(BuildContext context, FileExt fileType, String filePath) async {
-  switch (fileType) {
-    case FileExt.img:
-      break;
-    case FileExt.dir:
-      path = filePath;
-      pathChanged!();
-      break;
-    case FileExt.vid:
-      break;
-    case FileExt.file:
-      break;
-    case FileExt.loading:
-      break;
+  if (fileType == FileExt.dir) {
+    path = filePath;
+    pathChanged!();
+  } else if (fileType != FileExt.loading) {
+    FileHandler.downloadFile(context, filePath);
   }
 }
 
@@ -462,8 +455,16 @@ void pickFile() async {
   if (result != null) {
     for (int i = 0; i < result.count; i++) {
       String name = result.names[i]!;
-      Uint8List bytes = result.files[i].bytes!;
-      uploadTask = Dbs.storage.child("$path/$name").putData(bytes);
+      Uint8List? bytes;
+      try {
+        if (Platform.isAndroid) {
+          bytes = await File(result.paths[i]!).readAsBytes();
+        }
+      } catch (e) {
+        bytes = result.files[i].bytes!;
+      }
+
+      uploadTask = Dbs.storage.child("$path/$name").putData(bytes!);
       uploadName = name;
       uploadPath = path;
       uploadTask!.snapshotEvents.listen((TaskSnapshot snap) {

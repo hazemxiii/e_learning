@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -122,15 +121,9 @@ class FileHandler {
     return FileExt.file;
   }
 
-  static void openImage(BuildContext context, String filePath) async {
-    try {
-      if (Platform.isAndroid) {}
-    } catch (e) {
-      String url = await Dbs.storage.child(filePath).getDownloadURL();
-      Uri uri = Uri.parse(url);
-      await launchUrl(uri);
-    }
+  static void downloadFile(BuildContext context, String filePath) async {
+    String url = await Dbs.storage.child(filePath).getDownloadURL();
+    Uri uri = Uri.parse(url);
+    await launchUrl(uri);
   }
 }
-
-//TODO:make download files more flexible on web
