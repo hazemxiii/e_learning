@@ -30,7 +30,7 @@ class Clrs {
 }
 
 class StudentLevels {
-  static Map levels = {
+  static const Map<int, String> levels = {
     0: "All",
     1: "1st prep",
     2: "2nd prep",

@@ -3,6 +3,7 @@ import 'package:e_learning/admin/global_admin.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'global.dart';
@@ -151,6 +152,7 @@ class _SignInState extends State<SignIn> {
                         bool admin = await isAdmin(credentials.user!.uid);
                         if (admin) {
                           if (context.mounted) {
+                            savePassToPrefs(passCont.text);
                             Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
                                     builder: (context) =>
@@ -205,6 +207,32 @@ class _SignInState extends State<SignIn> {
         ),
       ),
     );
+  }
+}
+
+Future<void> savePassToPrefs(String pass) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  creatPrefsFieldIfNotFound(prefs, "pass", PrefsTypes.string, pass);
+  prefs.setString("pass", pass);
+}
+
+enum PrefsTypes { string, list, integer, float, boolean }
+
+void creatPrefsFieldIfNotFound(
+    SharedPreferences prefs, String key, PrefsTypes type, dynamic value) {
+  if (!prefs.containsKey(key)) {
+    switch (type) {
+      case PrefsTypes.string:
+        prefs.setString(key, value);
+      case PrefsTypes.list:
+        prefs.setStringList(key, value);
+      case PrefsTypes.integer:
+        prefs.setInt(key, value);
+      case PrefsTypes.float:
+        prefs.setDouble(key, value);
+      case PrefsTypes.boolean:
+        prefs.setBool(key, value);
+    }
   }
 }
 
