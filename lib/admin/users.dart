@@ -22,7 +22,6 @@ class UsersPage extends StatefulWidget {
 class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
   late AnimationController addUserAnimationCont;
   late Animation addUserAnimation;
-  late TextEditingController passwordCont;
 
   @override
   void initState() {
@@ -34,7 +33,6 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
             setState(() {});
           });
 
-    passwordCont = TextEditingController();
     super.initState();
   }
 
@@ -62,24 +60,6 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
                   children: [
                     OptionsRow(
                       addUserAnimationCont: addUserAnimationCont,
-                    ),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 200,
-                          child: TextField(
-                            controller: passwordCont,
-                            style: TextStyle(color: Clrs.sec),
-                            cursorColor: Clrs.sec,
-                            decoration: CustomDecoration.giveInputDecoration(
-                              radius: 10,
-                              BorderType.out,
-                              Clrs.sec,
-                              hint: "Password",
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                     const SizedBox(
                       height: 10,
@@ -127,7 +107,6 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
             bottom: addUserAnimation.value,
             child: AddUserDrawer(
               animationController: addUserAnimationCont,
-              passwordCont: passwordCont,
             ))
       ],
     ));
@@ -182,6 +161,9 @@ class _UserRowState extends State<UserRow> {
                 setState(() {
                   toggleSelectUser(widget.id!, widget.cells[1]);
                 });
+              } else {
+                Clipboard.setData(ClipboardData(
+                    text: "${widget.cells[0]} ${widget.cells[5]}"));
               }
             },
       child: Row(
@@ -309,11 +291,10 @@ class _OptionsRowState extends State<OptionsRow> {
 
 class AddUserDrawer extends StatefulWidget {
   final AnimationController animationController;
-  final TextEditingController passwordCont;
-  const AddUserDrawer(
-      {super.key,
-      required this.animationController,
-      required this.passwordCont});
+  const AddUserDrawer({
+    super.key,
+    required this.animationController,
+  });
 
   @override
   State<AddUserDrawer> createState() => _AddUserDrawerState();
@@ -361,13 +342,13 @@ class _AddUserDrawerState extends State<AddUserDrawer> {
                   color: Clrs.main,
                   onPressed: () async {
                     bool created = await createUser(
-                        context,
-                        emailCont.text,
-                        fNameCont.text,
-                        lNameCont.text,
-                        role,
-                        level,
-                        widget.passwordCont.text);
+                      context,
+                      emailCont.text,
+                      fNameCont.text,
+                      lNameCont.text,
+                      role,
+                      level,
+                    );
                     if (created) {
                       emailCont.text = "";
                       fNameCont.text = "";
@@ -518,13 +499,12 @@ void toggleSelectUser(String id, String role) {
 }
 
 Future<bool> createUser(BuildContext context, String email, String fName,
-    String lName, String role, int level, String oldPassword) async {
+    String lName, String role, int level) async {
   // the email of the admin that create the user
   String oldEmail = Dbs.auth.currentUser!.email!;
   // sign in to check the password the user provided is correct
   SharedPreferences prefs = await SharedPreferences.getInstance();
   try {
-    print(prefs.getString("pass"));
     await Dbs.auth.signInWithEmailAndPassword(
         email: oldEmail, password: prefs.getString("pass")!);
   } on FirebaseAuthException {
@@ -584,7 +564,8 @@ Future<bool> createUser(BuildContext context, String email, String fName,
       "email": "$email$domain",
       "fName": fName,
       "lName": lName,
-      "role": role
+      "role": role,
+      "password": password
     });
     if (role == "student") {
       batch.update(userDoc, {"level": level});
@@ -600,9 +581,8 @@ Future<bool> createUser(BuildContext context, String email, String fName,
       // print(e);
     });
 
-    // sign in again in the old account
     if (context.mounted) {
-      showCopyPassword(context, password);
+      // showCopyPassword(context, password);
     }
     return true;
   }
