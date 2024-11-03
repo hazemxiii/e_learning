@@ -5,6 +5,7 @@ import 'package:e_learning/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // to apply an option for multiple users
 List selectedUsers = [];
@@ -88,7 +89,8 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
                       "Role",
                       "First name",
                       "Last name",
-                      "Level"
+                      "Level",
+                      "Password"
                     ]),
                     Expanded(
                       child: SingleChildScrollView(
@@ -109,7 +111,8 @@ class _UsersPageState extends State<UsersPage> with TickerProviderStateMixin {
                                     role == "student"
                                         ? StudentLevels
                                             .levels[user.get("level")]
-                                        : ""
+                                        : "",
+                                    user.data()['password'] ?? ""
                                   ]);
                             }),
                           ],
@@ -482,7 +485,7 @@ class _AddUserDrawerState extends State<AddUserDrawer> {
                       return DropdownMenuItem(
                           value: i + 1,
                           child: Text(
-                            StudentLevels.levels[i + 1],
+                            StudentLevels.levels[i + 1]!,
                             style: TextStyle(color: Clrs.main),
                           ));
                     }),
@@ -519,9 +522,11 @@ Future<bool> createUser(BuildContext context, String email, String fName,
   // the email of the admin that create the user
   String oldEmail = Dbs.auth.currentUser!.email!;
   // sign in to check the password the user provided is correct
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   try {
-    await Dbs.auth
-        .signInWithEmailAndPassword(email: oldEmail, password: oldPassword);
+    print(prefs.getString("pass"));
+    await Dbs.auth.signInWithEmailAndPassword(
+        email: oldEmail, password: prefs.getString("pass")!);
   } on FirebaseAuthException {
     if (context.mounted) {
       showAwesomeDialog(context, "Password incorrect");
@@ -586,8 +591,8 @@ Future<bool> createUser(BuildContext context, String email, String fName,
     }
 
     try {
-      await Dbs.auth
-          .signInWithEmailAndPassword(email: oldEmail, password: oldPassword);
+      await Dbs.auth.signInWithEmailAndPassword(
+          email: oldEmail, password: prefs.getString("pass")!);
     } on FirebaseAuthException {
       //
     }

@@ -35,7 +35,7 @@ class _FilesListStudentPageState extends State<FilesListStudentPage> {
             .get("level");
       }
       if (path == "All") {
-        path = StudentLevels.levels[level];
+        path = StudentLevels.levels[level]!;
       }
       ListResult? filesForAll;
       if (path == StudentLevels.levels[level]) {

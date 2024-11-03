@@ -13,6 +13,7 @@ class AddExamNotifier extends ChangeNotifier {
 
   void setLevel(int level) {
     this.level = level;
+    notifyListeners();
   }
 
   void setDuration(int duration) {
