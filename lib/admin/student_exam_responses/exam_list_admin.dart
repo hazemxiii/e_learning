@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:e_learning/admin/answers_list.dart';
+import 'package:e_learning/admin/student_exam_responses/answers_list.dart';
 import 'package:e_learning/global.dart';
 import 'package:flutter/material.dart';
 
@@ -76,72 +76,113 @@ class ExamRow extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(examName, style: TextStyle(color: Clrs.sec)),
-              PopupMenuButton(
-                  onSelected: (v) async {
-                    switch (v) {
-                      case "grade":
-                        gradeExam(examName);
-                        break;
-                      case "delete":
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                backgroundColor: Colors.white,
-                                content: Text(
-                                    "Exam \"$examName\" will be deleted forever"),
-                                actions: [
-                                  MaterialButton(
-                                      textColor: Colors.white,
-                                      color: Clrs.main,
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Cancel")),
-                                  MaterialButton(
-                                      color: Colors.red,
-                                      textColor: Colors.white,
-                                      onPressed: () {
-                                        deleteExam(examName);
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Delete"))
-                                ],
-                              );
-                            });
-                        break;
-                    }
-                  },
-                  iconColor: Clrs.sec,
-                  color: Clrs.sec,
-                  itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: "delete",
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Delete",
-                                  style: TextStyle(color: Clrs.main)),
-                              Icon(
-                                Icons.delete,
-                                color: Clrs.main,
-                              ),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                            value: "grade",
-                            child: Text("Grade Exam",
-                                style: TextStyle(color: Clrs.main)))
-                      ])
+              ExamRowContext(
+                examName: examName,
+              ),
             ],
           )),
     );
   }
 }
 
+class ExamRowContext extends StatelessWidget {
+  final String examName;
+  const ExamRowContext({super.key, required this.examName});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+        onSelected: (v) async {
+          switch (v) {
+            case "grade":
+              gradeExam(examName);
+              break;
+            case "delete":
+              showDeleteDialog(context);
+              break;
+          }
+        },
+        iconColor: Clrs.sec,
+        color: Clrs.sec,
+        itemBuilder: (context) => [
+              PopupMenuItem(
+                value: "delete",
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Delete", style: TextStyle(color: Clrs.main)),
+                    Icon(
+                      Icons.delete,
+                      color: Clrs.main,
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                  value: "grade",
+                  child: Text("Grade Exam", style: TextStyle(color: Clrs.main)))
+            ]);
+  }
+
+  void showDeleteDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            content: Text("Exam \"$examName\" will be deleted forever"),
+            actions: [
+              MaterialButton(
+                  textColor: Colors.white,
+                  color: Clrs.main,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel")),
+              MaterialButton(
+                  color: Colors.red,
+                  textColor: Colors.white,
+                  onPressed: () {
+                    deleteExam(examName);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Delete"))
+            ],
+          );
+        });
+  }
+
+  deleteExam(String examName) async {
+    List<QueryDocumentSnapshot> questions = await getExamQuestions();
+    deleteDocuments(questions);
+
+    List<QueryDocumentSnapshot> responses = await getExamResponses();
+    deleteDocuments(responses);
+
+    Dbs.firestore.doc("exams/$examName").delete();
+    Dbs.firestore.doc("examsAnswers/$examName").delete();
+  }
+
+  Future<List<QueryDocumentSnapshot>> getExamQuestions() async {
+    return (await Dbs.firestore.collection("exams/$examName/questions").get())
+        .docs;
+  }
+
+  Future<List<QueryDocumentSnapshot>> getExamResponses() async {
+    return (await Dbs.firestore
+            .collection("exams/$examName/studentAnswers")
+            .get())
+        .docs;
+  }
+
+  void deleteDocuments(List<QueryDocumentSnapshot> documents) {
+    for (int i = 0; i < documents.length; i++) {
+      documents[i].reference.delete();
+    }
+  }
+}
+
 void gradeExam(String examName) async {
-  /// grades the exam for all users
   Map questionsMarks =
       (await Dbs.firestore.doc("/exams/$examName").get()).get("marks");
 
@@ -191,24 +232,4 @@ void gradeExam(String examName) async {
   DocumentReference examRef = Dbs.firestore.doc("exams/$examName");
   batch.update(examRef, {"marked": true});
   batch.commit().then((_) {}).catchError((e) => e);
-}
-
-deleteExam(String examName) async {
-  List<QueryDocumentSnapshot> questions =
-      (await Dbs.firestore.collection("exams/$examName/questions").get()).docs;
-  // delete each question
-  for (int i = 0; i < questions.length; i++) {
-    questions[i].reference.delete();
-  }
-
-  List<QueryDocumentSnapshot> responses =
-      (await Dbs.firestore.collection("exams/$examName/studentAnswers").get())
-          .docs;
-  // delete each student response
-  for (int i = 0; i < responses.length; i++) {
-    responses[i].reference.delete();
-  }
-
-  Dbs.firestore.doc("exams/$examName").delete();
-  Dbs.firestore.doc("examsAnswers/$examName").delete();
 }
