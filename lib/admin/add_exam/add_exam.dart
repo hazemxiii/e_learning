@@ -77,19 +77,29 @@ class _AddExamPageState extends State<AddExamPage> {
         await Provider.of<AddExamNotifier>(context, listen: false).sendExam();
     if (examSavedSuccessfully(result)) {
       showSendExamResult(
-          // ignore: use_build_context_synchronously
-          context,
-          "Saved",
-          "Exam saved successfully",
-          DialogType.success);
+          "Saved", "Exam saved successfully", DialogType.success);
     } else {
-      // ignore: use_build_context_synchronously
-      showSendExamResult(context, "Error", result, DialogType.error);
+      showSendExamResult("Error", result, DialogType.error);
     }
   }
 
   bool examSavedSuccessfully(String result) {
     return result == "Saved";
+  }
+
+  void showSendExamResult(String title, String desc, DialogType type) {
+    AwesomeDialog(
+      context: context,
+      dialogType: type,
+      animType: AnimType.rightSlide,
+      title: title,
+      desc: desc,
+      btnOkOnPress: type == DialogType.success
+          ? () {
+              Navigator.of(context).pop();
+            }
+          : () {},
+    ).show();
   }
 }
 
@@ -112,20 +122,4 @@ class AddQuestionButton extends StatelessWidget {
           child: icon),
     );
   }
-}
-
-void showSendExamResult(
-    BuildContext context, String title, String desc, DialogType type) {
-  AwesomeDialog(
-    context: context,
-    dialogType: type,
-    animType: AnimType.rightSlide,
-    title: title,
-    desc: desc,
-    btnOkOnPress: type == DialogType.success
-        ? () {
-            Navigator.of(context).pop();
-          }
-        : () {},
-  ).show();
 }

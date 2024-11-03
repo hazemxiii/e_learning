@@ -1,4 +1,4 @@
-import 'package:e_learning/admin/admin_home.dart';
+import 'package:e_learning/admin/admin_home_page/admin_home.dart';
 import 'package:e_learning/admin/global_admin.dart';
 import 'package:e_learning/student/student_home.dart';
 import 'package:flutter/material.dart';
