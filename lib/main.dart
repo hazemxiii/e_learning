@@ -12,17 +12,21 @@ import "package:provider/provider.dart";
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: DefaultFirebaseOptions.web,
   );
-  User? user = Dbs.auth.currentUser;
-  Widget home = const SignIn();
-  if (user != null) {
-    if (await isAdmin(user.uid)) {
-      home = const AdminHomePage();
-    } else {
-      home = const StudentHomePage();
-    }
-  }
+  // User? user = Dbs.auth.currentUser;
+  Widget home = Container(
+    color: Colors.green,
+    width: 100,
+    height: 100,
+  );
+  // if (user != null) {
+  //   if (await isAdmin(user.uid)) {
+  //     home = const AdminHomePage();
+  //   } else {
+  //     home = const StudentHomePage();
+  //   }
+  // }
 
   runApp(MultiProvider(
     providers: [
