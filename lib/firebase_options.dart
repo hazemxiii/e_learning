@@ -30,7 +30,10 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -45,17 +48,17 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyD9pUDaab9PbF7y9wAGiUlCzE272-jdPmc',
-    appId: '1:1074043418572:web:f6c0daeb65bc998d768f69',
+    appId: '1:1074043418572:web:f42d62c7c054a315768f69',
     messagingSenderId: '1074043418572',
     projectId: 'e-learning-2da6f',
     authDomain: 'e-learning-2da6f.firebaseapp.com',
     storageBucket: 'e-learning-2da6f.appspot.com',
-    measurementId: 'G-ZQVW3TJHC6',
+    measurementId: 'G-G62LK3MS61',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDBEFTzUADbpgMckcK49LNsRAjnPAxxQ88',
-    appId: '1:1074043418572:android:8e08eb9e17046e7c768f69',
+    appId: '1:1074043418572:android:225e935e3fdb6583768f69',
     messagingSenderId: '1074043418572',
     projectId: 'e-learning-2da6f',
     storageBucket: 'e-learning-2da6f.appspot.com',
@@ -63,20 +66,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDSlCj3VxBO8X3EtzSxqwo_kkstvSYH8ds',
-    appId: '1:1074043418572:ios:9d7bf8d9881fe3e3768f69',
+    appId: '1:1074043418572:ios:2787135cf881e0bc768f69',
     messagingSenderId: '1074043418572',
     projectId: 'e-learning-2da6f',
     storageBucket: 'e-learning-2da6f.appspot.com',
     iosBundleId: 'com.example.eLearning',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyD9pUDaab9PbF7y9wAGiUlCzE272-jdPmc',
-    appId: '1:1074043418572:web:afee38d4325286fa768f69',
-    messagingSenderId: '1074043418572',
-    projectId: 'e-learning-2da6f',
-    authDomain: 'e-learning-2da6f.firebaseapp.com',
-    storageBucket: 'e-learning-2da6f.appspot.com',
-    measurementId: 'G-SFSBYXDREY',
   );
 }
